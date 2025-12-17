@@ -1543,5 +1543,3 @@ services:
 ## 许可证
 
 本项目仅供学习使用。
-#   p a r k i n g - m i c r o s e r v i c e s  
- 
