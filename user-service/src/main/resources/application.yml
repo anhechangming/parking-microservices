@@ -1,0 +1,61 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service  # 服务名称
+
+  # Nacos 服务注册与发现配置 (Spring Boot 3.5.7 + Spring Cloud 2025.0.0)
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:localhost:8848}  # Nacos地址，支持环境变量
+        namespace: dev  # 命名空间（开发环境）
+        group: DEFAULT_GROUP  # 分组
+        enabled: true  # 启用服务注册
+      config:
+        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:localhost:8848}  # 配置中心地址，支持环境变量
+        file-extension: yaml  # 配置文件格式
+        namespace: dev
+        group: DEFAULT_GROUP
+        refresh-enabled: true  # 启用配置动态刷新
+
+  # 数据库配置 (MySQL 8.4) - 支持环境变量，用于Docker部署
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/parking_user_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      connection-timeout: 30000
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+# MyBatis 配置
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.parking.user.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# JWT 配置
+jwt:
+  secret: parking-system-secret-key-2025-for-jwt-authentication-hmac-sha512
+  expiration: 86400000  # 24小时（单位：毫秒）
+  header: Authorization
+  prefix: Bearer
+
+# 日志配置
+logging:
+  level:
+    com.parking.user: debug
+    com.alibaba.cloud.nacos: info
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}:%server.port] - %msg%n'

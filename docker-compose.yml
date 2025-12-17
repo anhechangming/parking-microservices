@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  # 用户服务数据库（包含认证）
+  user-db:
+    image: mysql:8.4
+    container_name: user-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: parking_user_db
+      MYSQL_USER: user_user
+      MYSQL_PASSWORD: user_pass
+      TZ: Asia/Shanghai
+    ports:
+      - "3307:3306"
+    volumes:
+      - user-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - parking-network
+    restart: unless-stopped
+
+  # 停车业务服务数据库
+  parking-db:
+    image: mysql:8.4
+    container_name: parking-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: parking_business_db
+      MYSQL_USER: parking_user
+      MYSQL_PASSWORD: parking_pass
+      TZ: Asia/Shanghai
+    ports:
+      - "3308:3306"
+    volumes:
+      - parking-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - parking-network
+    restart: unless-stopped
+
+  # 费用服务数据库
+  fee-db:
+    image: mysql:8.4
+    container_name: fee-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: parking_fee_db
+      MYSQL_USER: fee_user
+      MYSQL_PASSWORD: fee_pass
+      TZ: Asia/Shanghai
+    ports:
+      - "3309:3306"
+    volumes:
+      - fee-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - parking-network
+    restart: unless-stopped
+
+  # Nacos 3.1.0 服务注册与发现中心 (阶段2配置)
+  nacos:
+    image: nacos/nacos-server:v3.1.0
+    container_name: parking-nacos
+    environment:
+      - MODE=standalone  # 单机模式
+      - NACOS_AUTH_ENABLE=false  # 暂时禁用认证，方便开发调试
+      - NACOS_AUTH_TOKEN=SecretKey012345678901234567890123456789012345678901234567890123456789
+      - NACOS_AUTH_IDENTITY_KEY=serverIdentity
+      - NACOS_AUTH_IDENTITY_VALUE=security
+      - TZ=Asia/Shanghai
+      - JVM_XMS=512m  # 初始内存
+      - JVM_XMX=512m  # 最大内存
+    ports:
+      - "8848:8848"  # HTTP端口
+      - "9848:9848"  # gRPC端口
+      - "8080:8080"  # 额外的HTTP端口
+    networks:
+      - parking-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # 用户服务（包含认证）
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: parking-user-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://user-db:3306/parking_user_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root_password
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - TZ=Asia/Shanghai
+    ports:
+      - "8081:8081"
+    networks:
+      - parking-network
+    restart: always
+    depends_on:
+      user-db:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  # 停车业务服务
+  parking-service:
+    build:
+      context: ./parking-service
+      dockerfile: Dockerfile
+    container_name: parking-parking-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://parking-db:3306/parking_business_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root_password
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - TZ=Asia/Shanghai
+    ports:
+      - "8082:8082"
+    networks:
+      - parking-network
+    restart: always
+    depends_on:
+      parking-db:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  # 费用服务
+  fee-service:
+    build:
+      context: ./fee-service
+      dockerfile: Dockerfile
+    container_name: parking-fee-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://fee-db:3306/parking_fee_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root_password
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - TZ=Asia/Shanghai
+    ports:
+      - "8083:8083"
+    networks:
+      - parking-network
+    restart: always
+    depends_on:
+      fee-db:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+networks:
+  parking-network:
+    driver: bridge
+
+volumes:
+  user-data:
+    driver: local
+  parking-data:
+    driver: local
+  fee-data:
+    driver: local

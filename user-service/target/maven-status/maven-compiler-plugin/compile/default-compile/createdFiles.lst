@@ -1,0 +1,13 @@
+com\parking\user\mapper\OwnerMapper.class
+com\parking\user\common\Result.class
+com\parking\user\config\RestTemplateConfig.class
+com\parking\user\entity\Admin.class
+com\parking\user\UserServiceApplication.class
+com\parking\user\common\JwtUtils.class
+com\parking\user\service\AuthService.class
+com\parking\user\controller\OwnerController.class
+com\parking\user\mapper\AdminMapper.class
+com\parking\user\common\PageResult.class
+com\parking\user\entity\Owner.class
+com\parking\user\controller\AuthController.class
+com\parking\user\service\OwnerService.class
