@@ -109,12 +109,12 @@ services:
       retries: 10
       start_period: 30s
 
-  # 用户服务（包含认证）
-  user-service:
+  # 用户服务（包含认证）- 实例1
+  user-service-1:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: parking-user-service
+    container_name: parking-user-service-8081
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://user-db:3306/parking_user_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
@@ -132,12 +132,36 @@ services:
       nacos:
         condition: service_healthy
 
-  # 停车业务服务
-  parking-service:
+  # 用户服务（包含认证）- 实例2（用于测试负载均衡）
+  user-service-2:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: parking-user-service-8091
+    environment:
+      - SERVER_PORT=8091  # 覆盖默认端口
+      - SPRING_DATASOURCE_URL=jdbc:mysql://user-db:3306/parking_user_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root_password
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - TZ=Asia/Shanghai
+    ports:
+      - "8091:8091"
+    networks:
+      - parking-network
+    restart: always
+    depends_on:
+      user-db:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  # 停车业务服务 - 实例1
+  parking-service-1:
     build:
       context: ./parking-service
       dockerfile: Dockerfile
-    container_name: parking-parking-service
+    container_name: parking-parking-service-8082
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://parking-db:3306/parking_business_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
@@ -146,6 +170,30 @@ services:
       - TZ=Asia/Shanghai
     ports:
       - "8082:8082"
+    networks:
+      - parking-network
+    restart: always
+    depends_on:
+      parking-db:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+
+  # 停车业务服务 - 实例2（用于测试负载均衡）
+  parking-service-2:
+    build:
+      context: ./parking-service
+      dockerfile: Dockerfile
+    container_name: parking-parking-service-8092
+    environment:
+      - SERVER_PORT=8092  # 覆盖默认端口
+      - SPRING_DATASOURCE_URL=jdbc:mysql://parking-db:3306/parking_business_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root_password
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - TZ=Asia/Shanghai
+    ports:
+      - "8092:8092"
     networks:
       - parking-network
     restart: always

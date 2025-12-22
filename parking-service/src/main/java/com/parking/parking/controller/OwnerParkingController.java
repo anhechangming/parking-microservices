@@ -6,7 +6,10 @@ import com.parking.parking.entity.ParkingFee;
 import com.parking.parking.entity.ParkingSpace;
 import com.parking.parking.service.ParkingFeeService;
 import com.parking.parking.service.ParkingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -22,11 +25,16 @@ import java.util.Map;
 @RequestMapping("/parking/owner")
 public class OwnerParkingController {
 
+    private static final Logger log = LoggerFactory.getLogger(OwnerParkingController.class);
+
     @Autowired
     private ParkingService parkingService;
 
     @Autowired
     private ParkingFeeService parkingFeeService;
+
+    @Value("${server.port}")
+    private String serverPort;
 
     // ==================== 车位信息 ====================
 
@@ -63,6 +71,7 @@ public class OwnerParkingController {
      */
     @GetMapping("/record")
     public Result<OwnerParking> getParkingRecordByUserId(@RequestParam Long userId) {
+        log.info("【负载均衡】Request handled by parking-service instance on port: {}, userId: {}", serverPort, userId);
         OwnerParking ownerParking = parkingService.getOwnerParking(userId);
         if (ownerParking == null) {
             return Result.error("该用户没有停车记录");

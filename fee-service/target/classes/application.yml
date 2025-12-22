@@ -19,6 +19,49 @@ spring:
         namespace: dev
         group: DEFAULT_GROUP
         refresh-enabled: true  # 启用配置动态刷新
+    # 启用 OpenFeign 的熔断器支持 (Phase 3)
+    openfeign:
+      circuitbreaker:
+        enabled: true  # 确保 Feign 使用 CircuitBreaker
+
+# OpenFeign 配置 (Phase 3)
+feign:
+  circuitbreaker:
+    enabled: true  # 启用熔断器
+  client:
+    config:
+      default:
+        connectTimeout: 5000  # 连接超时时间（毫秒）
+        readTimeout: 5000  # 读取超时时间（毫秒）
+
+# Resilience4j 熔断器配置 (Phase 3)
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-service:  # 针对user-service的熔断配置
+        failure-rate-threshold: 50  # 失败率阈值（50%）
+        wait-duration-in-open-state: 10000  # 熔断开启后等待时间（10秒）
+        sliding-window-size: 10  # 滑动窗口大小（记录最近10次调用）
+        minimum-number-of-calls: 5  # 最小调用次数（至少5次调用后才计算失败率）
+        permitted-number-of-calls-in-half-open-state: 3  # 半开状态下允许的调用次数
+        automatic-transition-from-open-to-half-open-enabled: true  # 自动从开启到半开状态
+        slow-call-rate-threshold: 100  # 慢调用率阈值
+        slow-call-duration-threshold: 3000  # 慢调用时长阈值（3秒）
+      parking-service:  # 针对parking-service的熔断配置
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 3000
+  timelimiter:
+    instances:
+      user-service:
+        timeout-duration: 5s  # 超时时间
+      parking-service:
+        timeout-duration: 5s
 
   # 数据库配置 (MySQL 8.4) - 支持环境变量，用于Docker部署
   datasource:

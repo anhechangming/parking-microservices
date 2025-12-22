@@ -118,8 +118,13 @@ public class ParkingService {
     @Transactional
     public boolean assignParkingToOwner(Long userId, Long parkId, String carNumber) {
         // 【跨服务调用】验证用户是否存在
-        if (!userServiceClient.checkUserExists(userId)) {
-            throw new RuntimeException("用户不存在，无法分配车位");
+        try {
+            com.parking.parking.common.Result<java.util.Map<String, Object>> result = userServiceClient.getOwnerById(userId);
+            if (result == null || result.getCode() != 200 || result.getData() == null) {
+                throw new RuntimeException("用户不存在，无法分配车位");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("无法验证用户信息：" + e.getMessage());
         }
 
         // 检查车位是否存在且空闲
@@ -194,6 +199,6 @@ public class ParkingService {
      * @return 业主车位关联信息
      */
     public OwnerParking getOwnerParking(Long userId) {
-        return ownerParkingMapper.findByUserIdAndActive(userId);
+        return ownerParkingMapper.findByUserId(userId);
     }
 }

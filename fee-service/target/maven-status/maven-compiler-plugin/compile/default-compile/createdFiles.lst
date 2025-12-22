@@ -2,13 +2,12 @@ com\parking\fee\client\UserServiceClient.class
 com\parking\fee\service\ParkingFeeService.class
 com\parking\fee\entity\ParkingFee.class
 com\parking\fee\controller\FeeController.class
+com\parking\fee\client\UserServiceClientFallback.class
 com\parking\fee\client\ParkingServiceClient.class
 com\parking\fee\common\PageResult.class
-com\parking\fee\client\ParkingServiceClient$2.class
-com\parking\fee\client\UserServiceClient$1.class
 com\parking\fee\mapper\ParkingFeeMapper.class
-com\parking\fee\client\ParkingServiceClient$1.class
 com\parking\fee\config\RestTemplateConfig.class
 com\parking\fee\FeeServiceApplication.class
 com\parking\fee\common\Result.class
+com\parking\fee\client\ParkingServiceClientFallback.class
 com\parking\fee\controller\OwnerFeeController.class

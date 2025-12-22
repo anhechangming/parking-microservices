@@ -14,6 +14,9 @@ public interface OwnerParkingMapper {
     @Select("SELECT * FROM owner_parking WHERE user_id = #{userId} AND payment_status = '1'")
     OwnerParking findByUserIdAndActive(@Param("userId") Long userId);
 
+    @Select("SELECT * FROM owner_parking WHERE user_id = #{userId} ORDER BY id DESC LIMIT 1")
+    OwnerParking findByUserId(@Param("userId") Long userId);
+
     @Select("SELECT COUNT(*) FROM owner_parking WHERE user_id = #{userId} AND payment_status = '1'")
     int countByUserIdAndActive(@Param("userId") Long userId);
 

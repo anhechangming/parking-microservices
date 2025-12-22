@@ -51,11 +51,18 @@ public class ParkingFeeService {
      */
     public List<ParkingFee> getOwnerParkingFees(Long userId) {
         // 【跨服务调用】调用 user-service 获取用户信息（演示跨服务调用）
-        var userInfo = userServiceClient.getOwnerById(userId);
-        if (userInfo != null) {
-            // 可以根据用户类型（VIP/NORMAL）应用不同的业务逻辑
-            boolean isVip = userServiceClient.isVipUser(userId);
-            // 这里只是演示调用，实际业务逻辑可以根据VIP状态做不同处理
+        try {
+            com.parking.fee.common.Result<java.util.Map<String, Object>> result = userServiceClient.getOwnerById(userId);
+            if (result != null && result.getCode() == 200 && result.getData() != null) {
+                // 可以根据用户类型（VIP/NORMAL）应用不同的业务逻辑
+                String userType = (String) result.getData().get("userType");
+                boolean isVip = "VIP".equalsIgnoreCase(userType);
+                // 这里只是演示调用，实际业务逻辑可以根据VIP状态做不同处理
+            }
+        } catch (Exception e) {
+            // 用户服务调用失败，记录日志但不影响查询停车费
+            org.slf4j.LoggerFactory.getLogger(ParkingFeeService.class)
+                .warn("调用user-service失败: {}", e.getMessage());
         }
 
         return parkingFeeMapper.findByUserId(userId);
@@ -121,8 +128,8 @@ public class ParkingFeeService {
      */
     public boolean payParkingFee(Long parkFeeId, Long userId) {
         // 【跨服务调用1】验证用户是否存在
-        var userInfo = userServiceClient.getOwnerById(userId);
-        if (userInfo == null) {
+        com.parking.fee.common.Result<java.util.Map<String, Object>> userResult = userServiceClient.getOwnerById(userId);
+        if (userResult == null || userResult.getCode() != 200 || userResult.getData() == null) {
             throw new RuntimeException("用户不存在，无法缴费");
         }
 
@@ -142,14 +149,16 @@ public class ParkingFeeService {
 
         // 【跨服务调用2 - 关键业务依赖】调用 parking-service 验证用户有有效的停车记录
         // 只有用户当前有停车位分配记录，才能缴纳停车费
-        var parkingRecord = parkingServiceClient.getUserParkingRecord(userId);
-        if (parkingRecord == null) {
+        com.parking.fee.common.Result<java.util.Map<String, Object>> parkingResult =
+            parkingServiceClient.getUserParkingRecord(userId);
+        if (parkingResult == null || parkingResult.getCode() != 200 || parkingResult.getData() == null) {
             throw new RuntimeException("用户没有停车记录，无法缴费。请先分配车位。");
         }
 
         // 验证费用记录的车位ID与停车记录的车位ID一致
-        Long recordParkId = parkingRecord.get("parkId") != null ?
-            Long.valueOf(parkingRecord.get("parkId").toString()) : null;
+        java.util.Map<String, Object> parkingData = parkingResult.getData();
+        Long recordParkId = parkingData.get("parkId") != null ?
+            Long.valueOf(parkingData.get("parkId").toString()) : null;
         if (recordParkId == null || !recordParkId.equals(parkingFee.getParkId())) {
             throw new RuntimeException("费用记录与停车记录不匹配");
         }

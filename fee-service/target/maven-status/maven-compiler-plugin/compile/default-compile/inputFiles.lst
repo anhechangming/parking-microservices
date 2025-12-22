@@ -1,5 +1,7 @@
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\client\ParkingServiceClient.java
+D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\client\ParkingServiceClientFallback.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\client\UserServiceClient.java
+D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\client\UserServiceClientFallback.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\common\PageResult.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\common\Result.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\config\RestTemplateConfig.java

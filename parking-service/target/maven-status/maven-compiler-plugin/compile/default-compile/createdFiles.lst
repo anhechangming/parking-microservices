@@ -1,6 +1,7 @@
 com\parking\parking\controller\OwnerParkingController.class
 com\parking\parking\entity\ParkingFee.class
 com\parking\parking\mapper\OwnerParkingMapper.class
+com\parking\parking\client\UserServiceClientFallback.class
 com\parking\parking\entity\ParkingSpace.class
 com\parking\parking\client\UserServiceClient.class
 com\parking\parking\entity\OwnerParking.class
@@ -11,6 +12,5 @@ com\parking\parking\mapper\ParkingFeeMapper.class
 com\parking\parking\ParkingServiceApplication.class
 com\parking\parking\controller\ParkingController.class
 com\parking\parking\service\ParkingService.class
-com\parking\parking\client\UserServiceClient$1.class
 com\parking\parking\mapper\ParkingSpaceMapper.class
 com\parking\parking\common\PageResult.class

@@ -1,4 +1,5 @@
 D:\桌面\PMS- Microservices\parking-microservices\parking-service\src\main\java\com\parking\parking\client\UserServiceClient.java
+D:\桌面\PMS- Microservices\parking-microservices\parking-service\src\main\java\com\parking\parking\client\UserServiceClientFallback.java
 D:\桌面\PMS- Microservices\parking-microservices\parking-service\src\main\java\com\parking\parking\common\PageResult.java
 D:\桌面\PMS- Microservices\parking-microservices\parking-service\src\main\java\com\parking\parking\common\Result.java
 D:\桌面\PMS- Microservices\parking-microservices\parking-service\src\main\java\com\parking\parking\config\RestTemplateConfig.java

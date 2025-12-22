@@ -4,7 +4,10 @@ import com.parking.user.common.PageResult;
 import com.parking.user.common.Result;
 import com.parking.user.entity.Owner;
 import com.parking.user.service.OwnerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,8 +21,13 @@ import java.util.List;
 @RequestMapping("/user/owners")
 public class OwnerController {
 
+    private static final Logger log = LoggerFactory.getLogger(OwnerController.class);
+
     @Autowired
     private OwnerService ownerService;
+
+    @Value("${server.port}")
+    private String serverPort;
 
     /**
      * 分页查询业主列表
@@ -46,6 +54,7 @@ public class OwnerController {
      */
     @GetMapping("/{userId}")
     public Result<Owner> getOwnerById(@PathVariable Long userId) {
+        log.info("【负载均衡】Request handled by user-service instance on port: {}, userId: {}", serverPort, userId);
         Owner owner = ownerService.getOwnerById(userId);
         if (owner == null) {
             return Result.error("业主不存在");
