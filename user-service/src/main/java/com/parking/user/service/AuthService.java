@@ -53,8 +53,8 @@ public class AuthService {
             throw new RuntimeException("密码错误");
         }
 
-        // 生成Token
-        String token = jwtUtils.generateToken(admin.getUserId(), admin.getUsername(), "admin");
+        // 生成Token（使用loginName作为subject，因为username可能为空）
+        String token = jwtUtils.generateToken(admin.getUserId(), admin.getLoginName(), "admin");
 
         // 返回结果
         Map<String, Object> result = new HashMap<>();
@@ -88,8 +88,8 @@ public class AuthService {
             throw new RuntimeException("密码错误");
         }
 
-        // 生成Token
-        String token = jwtUtils.generateToken(owner.getUserId(), owner.getUsername(), "owner");
+        // 生成Token（使用loginName作为subject，因为username可能为空）
+        String token = jwtUtils.generateToken(owner.getUserId(), owner.getLoginName(), "owner");
 
         // 返回结果
         Map<String, Object> result = new HashMap<>();

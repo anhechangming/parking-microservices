@@ -38,27 +38,28 @@ public class JwtUtils {
      * 生成JWT Token
      *
      * @param userId 用户ID
-     * @param username 用户名
+     * @param identifier 用户标识（用作JWT subject，通常是loginName）
      * @param roleType 角色类型（admin/owner）
      * @return JWT Token
      */
-    public String generateToken(Long userId, String username, String roleType) {
+    public String generateToken(Long userId, String identifier, String roleType) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
-        claims.put("username", username);
+        claims.put("identifier", identifier);
         claims.put("roleType", roleType);
-        return createToken(claims);
+        return createToken(claims, identifier);
     }
 
     /**
      * 创建Token
      */
-    private String createToken(Map<String, Object> claims) {
+    private String createToken(Map<String, Object> claims, String subject) {
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .claims(claims)
+                .subject(subject)  // 设置标准subject字段，用于Gateway验证
                 .issuedAt(now)
                 .expiration(expirationDate)
                 .signWith(getSigningKey())
