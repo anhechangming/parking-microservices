@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: user-service  # 服务名称
+
+  cloud:
+    nacos:
+      # Nacos 配置中心 - 在应用启动时加载
+      config:
+        server-addr: ${SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR:172.19.0.11:8848}  # Docker容器IP
+        file-extension: yaml  # 配置文件格式
+        namespace: dev  # 命名空间（开发环境）
+        group: DEFAULT_GROUP  # 分组
+        refresh-enabled: true  # 启用配置动态刷新
+
+      # Nacos 服务发现
+      discovery:
+        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:172.19.0.11:8848}  # Docker容器IP
+        namespace: dev
+        group: DEFAULT_GROUP
+        enabled: true
+
+  profiles:
+    active: dev  # 激活的环境

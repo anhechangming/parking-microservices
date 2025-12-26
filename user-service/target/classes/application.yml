@@ -2,24 +2,6 @@ server:
   port: 8081
 
 spring:
-  application:
-    name: user-service  # 服务名称
-
-  # Nacos 服务注册与发现配置 (Spring Boot 3.5.7 + Spring Cloud 2025.0.0)
-  cloud:
-    nacos:
-      discovery:
-        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:localhost:8848}  # Nacos地址，支持环境变量
-        namespace: dev  # 命名空间（开发环境）
-        group: DEFAULT_GROUP  # 分组
-        enabled: true  # 启用服务注册
-      config:
-        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:localhost:8848}  # 配置中心地址，支持环境变量
-        file-extension: yaml  # 配置文件格式
-        namespace: dev
-        group: DEFAULT_GROUP
-        refresh-enabled: true  # 启用配置动态刷新
-
   # 数据库配置 (MySQL 8.4) - 支持环境变量，用于Docker部署
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -59,3 +41,14 @@ logging:
     com.alibaba.cloud.nacos: info
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}:%server.port] - %msg%n'
+
+# 业务配置 - 这些配置将从Nacos配置中心读取，支持动态刷新
+business:
+  feature:
+    user-registration-enabled: true  # 是否允许用户注册
+    max-login-attempts: 5  # 最大登录尝试次数
+  cache:
+    ttl: 3600  # 缓存过期时间（秒）
+  pagination:
+    default-page-size: 10  # 默认分页大小
+    max-page-size: 100  # 最大分页大小

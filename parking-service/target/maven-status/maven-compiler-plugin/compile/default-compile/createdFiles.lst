@@ -14,3 +14,4 @@ com\parking\parking\controller\ParkingController.class
 com\parking\parking\service\ParkingService.class
 com\parking\parking\mapper\ParkingSpaceMapper.class
 com\parking\parking\common\PageResult.class
+com\parking\parking\service\GenPassword.class

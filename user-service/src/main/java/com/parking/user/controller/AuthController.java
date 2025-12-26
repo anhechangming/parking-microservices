@@ -33,7 +33,8 @@ public class AuthController {
             Map<String, Object> result = authService.adminLogin(loginName, password);
             return Result.success("登录成功", result);
         } catch (Exception e) {
-            return Result.error(e.getMessage());
+            e.printStackTrace();  // 打印完整异常堆栈
+            return Result.error(e.getMessage() != null ? e.getMessage() : e.getClass().getName());
         }
     }
 
@@ -51,7 +52,8 @@ public class AuthController {
             Map<String, Object> result = authService.ownerLogin(loginName, password);
             return Result.success("登录成功", result);
         } catch (Exception e) {
-            return Result.error(e.getMessage());
+            e.printStackTrace();  // 打印完整异常堆栈
+            return Result.error(e.getMessage() != null ? e.getMessage() : e.getClass().getName());
         }
     }
 
