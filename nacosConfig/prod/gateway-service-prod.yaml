@@ -1,0 +1,82 @@
+# API网关配置 - 生产环境
+
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+            # 生产环境添加限流过滤器
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+        - id: parking-service
+          uri: lb://parking-service
+          predicates:
+            - Path=/parking/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+        - id: fee-service
+          uri: lb://fee-service
+          predicates:
+            - Path=/fee/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:  # 生产环境严格限制来源
+              - "https://www.yourproductionsite.com"
+              - "https://app.yourproductionsite.com"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+            allowedHeaders:
+              - Authorization
+              - Content-Type
+            allowCredentials: true
+            maxAge: 7200
+
+      discovery:
+        locator:
+          enabled: false  # 生产环境关闭自动路由发现，使用显式配置
+
+jwt:
+  secret: ${JWT_SECRET:parking-prod-super-secure-jwt-secret-key-2025-production-only}  # 生产环境从环境变量读取
+  expiration: 28800000  # 8小时（生产环境安全考虑）
+  header: Authorization
+  prefix: Bearer
+
+auth:
+  whitelist: "/user/auth/login,/actuator/health"  # 生产环境最小化白名单
+
+gateway:
+  ratelimit:
+    enabled: true
+    requests-per-second: 20  # 生产环境严格限流
+
+logging:
+  level:
+    com.parking.gateway: warn  # 生产环境只记录警告和错误
+    org.springframework.cloud.gateway: warn

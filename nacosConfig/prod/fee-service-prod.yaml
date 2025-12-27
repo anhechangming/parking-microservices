@@ -1,0 +1,15 @@
+# 业务配置 - fee-service生产环境
+business:
+  payment:
+    timeout-seconds: 600  # 生产环境超时时间更长
+    retry-times: 5  # 生产环境重试次数更多
+    enable-mock-payment: false  # 生产环境使用真实支付
+
+  discount:
+    member-discount-rate: 0.75  # 生产环境会员折扣更大（75折）
+    weekend-discount-rate: 0.9
+    holiday-discount-rate: 0.95  # 节假日也有优惠
+
+logging:
+  level:
+    com.parking.fee: warn

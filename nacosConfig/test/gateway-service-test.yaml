@@ -1,0 +1,69 @@
+# API网关配置 - 测试环境
+
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+
+        - id: parking-service
+          uri: lb://parking-service
+          predicates:
+            - Path=/parking/**
+          filters:
+            - StripPrefix=1
+
+        - id: fee-service
+          uri: lb://fee-service
+          predicates:
+            - Path=/fee/**
+          filters:
+            - StripPrefix=1
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:  # 测试环境限制来源
+              - "http://test-frontend.example.com"
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true  # 测试环境允许携带凭证
+            maxAge: 3600
+
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+jwt:
+  secret: parking-test-jwt-secret-key-2025-stronger  # 测试环境更强密钥
+  expiration: 43200000  # 12小时（测试环境更短）
+  header: Authorization
+  prefix: Bearer
+
+auth:
+  whitelist: "/user/auth/**,/actuator/health"  # 测试环境更严格的白名单
+
+gateway:
+  ratelimit:
+    enabled: true
+    requests-per-second: 50  # 测试环境限流适中
+
+logging:
+  level:
+    com.parking.gateway: info  # 测试环境info级别
+    org.springframework.cloud.gateway: info

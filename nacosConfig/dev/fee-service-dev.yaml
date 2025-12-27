@@ -1,0 +1,15 @@
+# 业务配置 - fee-service开发环境
+business:
+  payment:
+    timeout-seconds: 300  # 支付超时时间（秒）
+    retry-times: 3  # 支付失败重试次数
+    enable-mock-payment: true  # 开发环境启用模拟支付
+
+  discount:
+    member-discount-rate: 0.8  # 会员折扣率（8折）
+    weekend-discount-rate: 0.9  # 周末折扣率（9折）
+    holiday-discount-rate: 1.0  # 节假日不打折
+
+logging:
+  level:
+    com.parking.fee: debug

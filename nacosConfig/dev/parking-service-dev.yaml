@@ -1,0 +1,15 @@
+# 业务配置 - parking-service开发环境
+business:
+  parking:
+    max-parking-hours: 24  # 最大停车时长（小时）
+    warning-before-minutes: 30  # 到期前提醒时间（分钟）
+    allow-overnight: true  # 是否允许过夜停车
+
+  pricing:
+    first-hour-rate: 5.0  # 首小时费率
+    additional-hour-rate: 3.0  # 后续小时费率
+    daily-max-fee: 60.0  # 每日最高收费
+
+logging:
+  level:
+    com.parking.parking: debug

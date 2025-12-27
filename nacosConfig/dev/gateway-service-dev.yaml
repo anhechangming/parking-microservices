@@ -1,0 +1,79 @@
+# API网关配置 - 开发环境
+
+# 服务器端口
+server:
+  port: 8080
+
+# Spring Cloud Gateway 路由配置
+spring:
+  cloud:
+    gateway:
+      # 路由规则
+      routes:
+        # 用户服务路由
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+
+        # 停车场服务路由
+        - id: parking-service
+          uri: lb://parking-service
+          predicates:
+            - Path=/parking/**
+          filters:
+            - StripPrefix=1
+
+        # 停车费服务路由
+        - id: fee-service
+          uri: lb://fee-service
+          predicates:
+            - Path=/fee/**
+          filters:
+            - StripPrefix=1
+
+      # CORS配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"  # 开发环境允许所有来源
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: false
+            maxAge: 3600
+
+      # 服务发现配置
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+# JWT配置
+jwt:
+  secret: parking-management-system-jwt-secret-key-2025-microservices-project
+  expiration: 86400000  # 24小时
+  header: Authorization
+  prefix: Bearer
+
+# 认证白名单
+auth:
+  whitelist: "/user/auth/**,/actuator/**,/favicon.ico,/user/api/config/current"
+
+# 限流配置（开发环境宽松）
+gateway:
+  ratelimit:
+    enabled: true
+    requests-per-second: 100  # 开发环境限流宽松
+
+# 日志配置
+logging:
+  level:
+    com.parking.gateway: debug  # 开发环境详细日志
+    org.springframework.cloud.gateway: debug

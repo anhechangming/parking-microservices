@@ -1,0 +1,23 @@
+  # 业务配置 - user-service开发环境
+business:
+  feature:
+    user-registration-enabled: true
+    max-login-attempts: 5
+  cache:
+    ttl: 3600
+  pagination:
+    default-page-size: 10
+    max-page-size: 100
+
+  # JWT配置（必须与gateway一致！）
+jwt:
+  secret: parking-management-system-jwt-secret-key-2025-microservices-project
+  expiration: 86400000
+  header: Authorization
+  prefix: Bearer
+
+logging:
+  level:
+    com.parking.user: debug
+    org.springframework.web: debug 
+    org.springframework.jdbc: debug

@@ -1,0 +1,15 @@
+# 业务配置 - parking-service测试环境
+business:
+  parking:
+    max-parking-hours: 12  # 测试环境限制更短
+    warning-before-minutes: 15
+    allow-overnight: false
+
+  pricing:
+    first-hour-rate: 4.0
+    additional-hour-rate: 2.5
+    daily-max-fee: 50.0
+
+logging:
+  level:
+    com.parking.parking: info

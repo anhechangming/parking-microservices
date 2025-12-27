@@ -1,0 +1,19 @@
+# 业务配置 - user-service测试环境
+business:
+  feature:
+    user-registration-enabled: true
+    max-login-attempts: 3  # 测试环境更严格
+  cache:
+    ttl: 1800  # 测试环境缓存时间短一些
+  pagination:
+    default-page-size: 20
+    max-page-size: 50
+  # JWT配置（必须与gateway一致！）
+jwt:
+  secret: parking-management-system-jwt-secret-key-2025-microservices-project
+  expiration: 86400000
+  header: Authorization
+  prefix: Bearer
+logging:
+  level:
+    com.parking.user: info  # 测试环境用info级别

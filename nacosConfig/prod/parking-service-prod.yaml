@@ -1,0 +1,15 @@
+# 业务配置 - parking-service生产环境
+business:
+  parking:
+    max-parking-hours: 48  # 生产环境允许更长停车时间
+    warning-before-minutes: 60
+    allow-overnight: true
+
+  pricing:
+    first-hour-rate: 8.0  # 生产环境费率更高
+    additional-hour-rate: 5.0
+    daily-max-fee: 100.0
+
+logging:
+  level:
+    com.parking.parking: warn
