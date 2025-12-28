@@ -1,10 +1,16 @@
+com\parking\fee\messaging\FeeEventPublisher.class
 com\parking\fee\client\UserServiceClient.class
+com\parking\fee\messaging\ParkingEventConsumer.class
+com\parking\fee\event\FeePaidEvent.class
 com\parking\fee\service\ParkingFeeService.class
 com\parking\fee\entity\ParkingFee.class
 com\parking\fee\controller\FeeController.class
+com\parking\fee\messaging\NotificationConsumer.class
 com\parking\fee\client\UserServiceClientFallback.class
 com\parking\fee\client\ParkingServiceClient.class
 com\parking\fee\common\PageResult.class
+com\parking\fee\event\ParkingAssignedEvent.class
+com\parking\fee\config\RabbitMQConfig.class
 com\parking\fee\mapper\ParkingFeeMapper.class
 com\parking\fee\config\RestTemplateConfig.class
 com\parking\fee\FeeServiceApplication.class

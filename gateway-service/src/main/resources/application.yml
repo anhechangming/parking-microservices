@@ -1,5 +1,63 @@
 # 最小化配置，大部分配置从Nacos读取
 
+# 服务端口（阶段6修改，避免与Nacos控制台8080冲突）
+server:
+  port: ${SERVER_PORT:9000}
+
+# JWT配置（本地配置 - 阶段6）
+jwt:
+  secret: ${JWT_SECRET:parking-management-system-jwt-secret-key-2025-microservices-project}
+  expiration: 86400000  # 24小时（毫秒）
+  header: Authorization  # JWT token 在请求头中的字段名
+  prefix: "Bearer"  # JWT token 前缀（不含空格，代码中会自动添加）
+
+# 认证白名单配置（本地配置 - 阶段6）
+auth:
+  whitelist: /user/auth/admin/login,/user/auth/owner/login,/user/auth/admin/register,/actuator/**
+
+# Spring Cloud Gateway 路由配置
+spring:
+  cloud:
+    gateway:
+      routes:
+        # 用户服务路由
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+
+        # 停车服务路由
+        - id: parking-service
+          uri: lb://parking-service
+          predicates:
+            - Path=/parking/**
+          filters:
+            - StripPrefix=1
+
+        # 费用服务路由
+        - id: fee-service
+          uri: lb://fee-service
+          predicates:
+            - Path=/fee/**
+          filters:
+            - StripPrefix=1
+
+      # 全局CORS配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: false
+
 # Actuator配置（保留在本地）
 management:
   endpoints:

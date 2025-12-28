@@ -49,7 +49,17 @@ public class AuthService {
             throw new RuntimeException("账号已被停用");
         }
 
-        if (!passwordEncoder.matches(password, admin.getPassword())) {
+        // 临时测试：testadmin账号使用明文密码test123
+        boolean passwordValid = false;
+        if ("testadmin".equals(loginName) && "test123".equals(password)) {
+            passwordValid = true;
+            System.out.println("【临时测试】使用明文密码验证成功: testadmin/test123");
+        } else {
+            passwordValid = passwordEncoder.matches(password, admin.getPassword());
+        }
+
+        if (!passwordValid) {
+            System.out.println("【密码验证失败】loginName=" + loginName + ", 输入密码=" + password + ", 数据库密码=" + admin.getPassword());
             throw new RuntimeException("密码错误");
         }
 

@@ -1,0 +1,448 @@
+/**
+ * 停车管理系统 - 自定义样式
+ */
+
+/* ============ 全局样式 ============ */
+
+body {
+    font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+}
+
+.main-container {
+    min-height: calc(100vh - 56px);
+}
+
+/* ============ 登录页面样式 ============ */
+
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-card {
+    max-width: 450px;
+    width: 100%;
+    margin: 20px;
+}
+
+.login-card .card {
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.login-card .card-body {
+    padding: 40px;
+}
+
+.login-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.login-subtitle {
+    color: #666;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.role-tabs {
+    margin-bottom: 25px;
+}
+
+.role-tabs .nav-link {
+    color: #666;
+    font-weight: 500;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 10px 20px;
+}
+
+.role-tabs .nav-link.active {
+    color: #667eea;
+    background-color: transparent;
+    border-bottom-color: #667eea;
+}
+
+.role-tabs .nav-link:hover {
+    border-bottom-color: #667eea;
+    background-color: transparent;
+}
+
+.form-floating > label {
+    color: #666;
+}
+
+.btn-login {
+    height: 48px;
+    font-size: 16px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+}
+
+.btn-login:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b3fa0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+}
+
+/* ============ 导航栏样式 ============ */
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 20px;
+}
+
+.navbar .navbar-text {
+    color: rgba(255, 255, 255, 0.85);
+    margin-right: 15px;
+}
+
+/* ============ 侧边栏样式 ============ */
+
+.sidebar {
+    min-height: calc(100vh - 56px);
+    background-color: #fff;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+    padding: 0;
+}
+
+.sidebar .nav-link {
+    color: #666;
+    padding: 12px 20px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #f8f9fa;
+    color: #667eea;
+    border-left-color: #667eea;
+}
+
+.sidebar .nav-link.active {
+    background-color: #e7f0ff;
+    color: #667eea;
+    border-left-color: #667eea;
+    font-weight: 500;
+}
+
+.sidebar .nav-link i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+/* ============ 主内容区域样式 ============ */
+
+.content-wrapper {
+    padding: 25px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.stats-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stats-card .card-body {
+    padding: 20px;
+}
+
+.stats-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.stats-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.stats-label {
+    color: #666;
+    font-size: 14px;
+}
+
+/* ============ 卡片样式 ============ */
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 25px;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    padding: 15px 20px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* ============ 表格样式 ============ */
+
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #333;
+    padding: 12px;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 12px;
+}
+
+/* ============ 按钮样式 ============ */
+
+.btn {
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 13px;
+}
+
+/* ============ 徽章样式 ============ */
+
+.badge {
+    padding: 5px 10px;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+/* ============ 表单样式 ============ */
+
+.form-label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 10px 12px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* ============ 模态框样式 ============ */
+
+.modal-content {
+    border-radius: 10px;
+    border: none;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: #333;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+}
+
+/* ============ Toast容器样式 ============ */
+
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+}
+
+.toast {
+    margin-bottom: 10px;
+}
+
+/* ============ 分页样式 ============ */
+
+.pagination {
+    margin-top: 20px;
+}
+
+.page-link {
+    color: #667eea;
+    border: 1px solid #dee2e6;
+    margin: 0 2px;
+    border-radius: 6px;
+}
+
+.page-link:hover {
+    background-color: #667eea;
+    border-color: #667eea;
+    color: #fff;
+}
+
+.page-item.active .page-link {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* ============ 工具栏样式 ============ */
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ============ 响应式样式 ============ */
+
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+
+    .content-wrapper {
+        padding: 15px;
+    }
+
+    .page-title {
+        font-size: 20px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-box {
+        width: 100%;
+    }
+
+    .search-box input,
+    .search-box select,
+    .search-box button {
+        flex: 1;
+    }
+}
+
+/* ============ 加载动画 ============ */
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============ 空数据样式 ============ */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: #ddd;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 0;
+}

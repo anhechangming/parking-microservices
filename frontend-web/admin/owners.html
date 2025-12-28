@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业主管理 - 停车管理系统</title>
+
+    <link href="../libs/bootstrap.min.css" rel="stylesheet">
+    <link href="../libs/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="toastContainer"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-p-square-fill"></i> 停车管理系统 - 管理员
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="usernameDisplay"></span>
+                </span>
+                <button class="btn btn-outline-light btn-sm" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="dashboard.html">
+                                <i class="bi bi-speedometer2"></i> 控制台
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="owners.html">
+                                <i class="bi bi-people"></i> 业主管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="parkings.html">
+                                <i class="bi bi-car-front"></i> 车位管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="fees.html">
+                                <i class="bi bi-cash-coin"></i> 费用管理
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-10 ms-sm-auto content-wrapper">
+                <h2 class="page-title">业主管理</h2>
+
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" class="form-control" id="searchKeyword" placeholder="搜索业主姓名、手机号...">
+                        <button class="btn btn-primary" id="searchBtn">
+                            <i class="bi bi-search"></i> 搜索
+                        </button>
+                    </div>
+                    <button class="btn btn-success" id="addOwnerBtn">
+                        <i class="bi bi-plus-lg"></i> 新增业主
+                    </button>
+                </div>
+
+                <!-- 业主列表 -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>业主ID</th>
+                                        <th>登录账号</th>
+                                        <th>业主姓名</th>
+                                        <th>性别</th>
+                                        <th>手机号码</th>
+                                        <th>身份证号</th>
+                                        <th>状态</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ownerTableBody">
+                                    <!-- 动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 分页 -->
+                        <div id="paginationContainer"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 新增/编辑业主模态框 -->
+    <div class="modal fade" id="ownerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ownerModalTitle">新增业主</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="ownerForm">
+                        <input type="hidden" id="userId">
+
+                        <div class="mb-3">
+                            <label for="loginName" class="form-label">登录账号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="loginName" required>
+                        </div>
+
+                        <div class="mb-3" id="passwordGroup">
+                            <label for="password" class="form-label">登录密码 <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" required>
+                            <small class="text-muted">密码长度6-20位</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">业主姓名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">手机号码 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="phone" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sex" class="form-label">性别</label>
+                            <select class="form-select" id="sex">
+                                <option value="0">男</option>
+                                <option value="1">女</option>
+                                <option value="2">未知</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="idCard" class="form-label">身份证号</label>
+                            <input type="text" class="form-control" id="idCard">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">状态</label>
+                            <select class="form-select" id="status">
+                                <option value="0">正常</option>
+                                <option value="1">停用</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="remark" class="form-label">备注</label>
+                            <textarea class="form-control" id="remark" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveOwnerBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../libs/jquery.min.js"></script>
+    <script src="../libs/bootstrap.bundle.min.js"></script>
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+
+    <script>
+        let currentPage = 1;
+        let pageSize = 10;
+        let searchKeyword = '';
+        let ownerModal;
+
+        $(document).ready(function() {
+            if (!Auth.checkAuth('admin')) return;
+
+            $('#usernameDisplay').text(Auth.getUsername());
+            $('#logoutBtn').click(() => Utils.confirm('确定要退出登录吗？', () => Auth.logout()));
+
+            ownerModal = new bootstrap.Modal('#ownerModal');
+
+            // 加载业主列表
+            loadOwners();
+
+            // 搜索
+            $('#searchBtn').click(() => {
+                searchKeyword = $('#searchKeyword').val().trim();
+                currentPage = 1;
+                loadOwners();
+            });
+
+            $('#searchKeyword').keypress((e) => {
+                if (e.which === 13) $('#searchBtn').click();
+            });
+
+            // 新增业主
+            $('#addOwnerBtn').click(() => {
+                $('#ownerModalTitle').text('新增业主');
+                $('#ownerForm')[0].reset();
+                $('#userId').val('');
+                $('#passwordGroup').show();
+                $('#password').prop('required', true);
+                ownerModal.show();
+            });
+
+            // 保存业主
+            $('#saveOwnerBtn').click(saveOwner);
+        });
+
+        // 加载业主列表
+        function loadOwners() {
+            const params = {
+                pageNum: currentPage,
+                pageSize: pageSize
+            };
+
+            if (searchKeyword) {
+                params.keyword = searchKeyword;
+            }
+
+            http.get(API.OWNERS.LIST, { params })
+                .then(res => {
+                    renderOwnerTable(res.data.records || []);
+                    renderPagination(res.data);
+                })
+                .catch(err => console.error('加载业主列表失败：', err));
+        }
+
+        // 渲染业主表格
+        function renderOwnerTable(owners) {
+            if (!owners || owners.length === 0) {
+                $('#ownerTableBody').html(Utils.emptyData(9));
+                return;
+            }
+
+            let html = '';
+            owners.forEach(owner => {
+                html += `
+                    <tr>
+                        <td>${owner.userId}</td>
+                        <td>${owner.loginName}</td>
+                        <td>${owner.username}</td>
+                        <td>${DICT.SEX[owner.sex] || '-'}</td>
+                        <td>${owner.phone || '-'}</td>
+                        <td>${owner.idCard || '-'}</td>
+                        <td>${DICT.USER_STATUS[owner.status] || '-'}</td>
+                        <td>${Utils.formatDateTime(owner.createTime)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editOwner(${owner.userId})">
+                                <i class="bi bi-pencil"></i> 编辑
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteOwner(${owner.userId}, '${owner.username}')">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $('#ownerTableBody').html(html);
+        }
+
+        // 渲染分页
+        function renderPagination(pageData) {
+            const html = Utils.buildPagination(
+                pageData.current || currentPage,
+                pageData.total || 0,
+                pageData.size || pageSize,
+                (page) => {
+                    currentPage = page;
+                    loadOwners();
+                }
+            );
+
+            $('#paginationContainer').html(html);
+        }
+
+        // 编辑业主
+        function editOwner(userId) {
+            http.get(API.OWNERS.GET(userId))
+                .then(res => {
+                    const owner = res.data;
+                    $('#ownerModalTitle').text('编辑业主');
+                    $('#userId').val(owner.userId);
+                    $('#loginName').val(owner.loginName).prop('disabled', true);
+                    $('#username').val(owner.username);
+                    $('#phone').val(owner.phone);
+                    $('#sex').val(owner.sex);
+                    $('#idCard').val(owner.idCard);
+                    $('#status').val(owner.status);
+                    $('#remark').val(owner.remark);
+                    $('#passwordGroup').hide();
+                    $('#password').prop('required', false);
+                    ownerModal.show();
+                })
+                .catch(err => console.error('获取业主信息失败：', err));
+        }
+
+        // 保存业主
+        function saveOwner() {
+            const userId = $('#userId').val();
+            const loginName = $('#loginName').val().trim();
+            const password = $('#password').val();
+            const username = $('#username').val().trim();
+            const phone = $('#phone').val().trim();
+            const sex = $('#sex').val();
+            const idCard = $('#idCard').val().trim();
+            const status = $('#status').val();
+            const remark = $('#remark').val().trim();
+
+            // 验证
+            if (!loginName || !username || !phone) {
+                Utils.showError('请填写必填项');
+                return;
+            }
+
+            if (!userId && !Validator.isPassword(password)) {
+                Utils.showError('密码长度必须为6-20位');
+                return;
+            }
+
+            if (!Validator.isPhone(phone)) {
+                Utils.showError('手机号格式不正确');
+                return;
+            }
+
+            if (idCard && !Validator.isIdCard(idCard)) {
+                Utils.showError('身份证号格式不正确');
+                return;
+            }
+
+            const data = {
+                loginName,
+                username,
+                phone,
+                sex,
+                idCard,
+                status,
+                remark
+            };
+
+            if (!userId) {
+                data.password = password;
+            }
+
+            const request = userId
+                ? http.put(API.OWNERS.UPDATE(userId), data)
+                : http.post(API.OWNERS.CREATE, data);
+
+            $('#saveOwnerBtn').prop('disabled', true).text('保存中...');
+
+            request
+                .then(() => {
+                    Utils.showSuccess(userId ? '修改成功' : '新增成功');
+                    ownerModal.hide();
+                    $('#loginName').prop('disabled', false);
+                    loadOwners();
+                })
+                .catch(err => console.error('保存失败：', err))
+                .finally(() => {
+                    $('#saveOwnerBtn').prop('disabled', false).text('保存');
+                });
+        }
+
+        // 删除业主
+        function deleteOwner(userId, username) {
+            Utils.confirm(`确定要删除业主"${username}"吗？`, () => {
+                http.delete(API.OWNERS.DELETE(userId))
+                    .then(() => {
+                        Utils.showSuccess('删除成功');
+                        loadOwners();
+                    })
+                    .catch(err => console.error('删除失败：', err));
+            });
+        }
+    </script>
+</body>
+</html>

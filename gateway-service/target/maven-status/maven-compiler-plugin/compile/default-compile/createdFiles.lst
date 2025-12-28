@@ -1,3 +1,0 @@
-com\parking\gateway\GatewayApplication.class
-com\parking\gateway\util\JwtUtil.class
-com\parking\gateway\filter\JwtAuthenticationFilter.class

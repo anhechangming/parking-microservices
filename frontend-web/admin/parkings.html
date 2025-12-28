@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车位管理 - 停车管理系统</title>
+
+    <link href="../libs/bootstrap.min.css" rel="stylesheet">
+    <link href="../libs/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="toastContainer"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-p-square-fill"></i> 停车管理系统 - 管理员
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="usernameDisplay"></span>
+                </span>
+                <button class="btn btn-outline-light btn-sm" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="dashboard.html">
+                                <i class="bi bi-speedometer2"></i> 控制台
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="owners.html">
+                                <i class="bi bi-people"></i> 业主管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="parkings.html">
+                                <i class="bi bi-car-front"></i> 车位管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="fees.html">
+                                <i class="bi bi-cash-coin"></i> 费用管理
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-10 ms-sm-auto content-wrapper">
+                <h2 class="page-title">车位管理</h2>
+
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" class="form-control" id="searchKeyword" placeholder="搜索车位编号...">
+                        <button class="btn btn-primary" id="searchBtn">
+                            <i class="bi bi-search"></i> 搜索
+                        </button>
+                    </div>
+                    <button class="btn btn-success" id="addParkingBtn">
+                        <i class="bi bi-plus-lg"></i> 新增车位
+                    </button>
+                </div>
+
+                <!-- 车位列表 -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>车位ID</th>
+                                        <th>车位编号</th>
+                                        <th>车位类型</th>
+                                        <th>车位状态</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="parkingTableBody">
+                                    <!-- 动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 分页 -->
+                        <div id="paginationContainer"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 新增/编辑车位模态框 -->
+    <div class="modal fade" id="parkingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="parkingModalTitle">新增车位</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="parkingForm">
+                        <input type="hidden" id="parkId">
+
+                        <div class="mb-3">
+                            <label for="parkNum" class="form-label">车位编号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="parkNum" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="parkType" class="form-label">车位类型</label>
+                            <select class="form-select" id="parkType">
+                                <option value="0">地上车位</option>
+                                <option value="1">地下车位</option>
+                                <option value="2">立体车位</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="parkStatus" class="form-label">车位状态</label>
+                            <select class="form-select" id="parkStatus">
+                                <option value="0">空闲</option>
+                                <option value="1">已占用</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveParkingBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分配车位模态框 -->
+    <div class="modal fade" id="assignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">分配车位</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="assignForm">
+                        <input type="hidden" id="assignParkId">
+
+                        <div class="mb-3">
+                            <label class="form-label">车位编号</label>
+                            <input type="text" class="form-control" id="assignParkNum" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="assignUserId" class="form-label">选择业主 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="assignUserId" required>
+                                <option value="">请选择业主</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="assignCarNum" class="form-label">车牌号</label>
+                            <input type="text" class="form-control" id="assignCarNum" placeholder="请输入车牌号（可选）">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmAssignBtn">确认分配</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../libs/jquery.min.js"></script>
+    <script src="../libs/bootstrap.bundle.min.js"></script>
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+
+    <script>
+        let currentPage = 1;
+        let pageSize = 10;
+        let searchKeyword = '';
+        let parkingModal;
+        let assignModal;
+
+        $(document).ready(function() {
+            if (!Auth.checkAuth('admin')) return;
+
+            $('#usernameDisplay').text(Auth.getUsername());
+            $('#logoutBtn').click(() => Utils.confirm('确定要退出登录吗？', () => Auth.logout()));
+
+            parkingModal = new bootstrap.Modal('#parkingModal');
+            assignModal = new bootstrap.Modal('#assignModal');
+
+            loadParkings();
+            loadOwnersList();
+
+            $('#searchBtn').click(() => {
+                searchKeyword = $('#searchKeyword').val().trim();
+                currentPage = 1;
+                loadParkings();
+            });
+
+            $('#searchKeyword').keypress((e) => {
+                if (e.which === 13) $('#searchBtn').click();
+            });
+
+            $('#addParkingBtn').click(() => {
+                $('#parkingModalTitle').text('新增车位');
+                $('#parkingForm')[0].reset();
+                $('#parkId').val('');
+                parkingModal.show();
+            });
+
+            $('#saveParkingBtn').click(saveParking);
+            $('#confirmAssignBtn').click(assignParking);
+        });
+
+        function loadParkings() {
+            const params = {
+                pageNum: currentPage,
+                pageSize: pageSize
+            };
+
+            if (searchKeyword) {
+                params.keyword = searchKeyword;
+            }
+
+            http.get(API.PARKINGS.LIST, { params })
+                .then(res => {
+                    renderParkingTable(res.data.records || []);
+                    renderPagination(res.data);
+                })
+                .catch(err => console.error('加载车位列表失败：', err));
+        }
+
+        function renderParkingTable(parkings) {
+            if (!parkings || parkings.length === 0) {
+                $('#parkingTableBody').html(Utils.emptyData(6));
+                return;
+            }
+
+            let html = '';
+            parkings.forEach(parking => {
+                html += `
+                    <tr>
+                        <td>${parking.parkId}</td>
+                        <td>${parking.parkNum}</td>
+                        <td>${DICT.PARK_TYPE[parking.parkType] || '-'}</td>
+                        <td>${DICT.PARK_STATUS[parking.parkStatus] || '-'}</td>
+                        <td>${Utils.formatDateTime(parking.createTime)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editParking(${parking.parkId})">
+                                <i class="bi bi-pencil"></i> 编辑
+                            </button>
+                            ${parking.parkStatus == 0 ?
+                                `<button class="btn btn-sm btn-success" onclick="showAssignModal(${parking.parkId}, '${parking.parkNum}')">
+                                    <i class="bi bi-person-plus"></i> 分配
+                                </button>` :
+                                `<button class="btn btn-sm btn-warning" onclick="returnParking(${parking.parkId}, '${parking.parkNum}')">
+                                    <i class="bi bi-arrow-return-left"></i> 归还
+                                </button>`
+                            }
+                            <button class="btn btn-sm btn-danger" onclick="deleteParking(${parking.parkId}, '${parking.parkNum}')">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $('#parkingTableBody').html(html);
+        }
+
+        function renderPagination(pageData) {
+            const html = Utils.buildPagination(
+                pageData.current || currentPage,
+                pageData.total || 0,
+                pageData.size || pageSize,
+                (page) => {
+                    currentPage = page;
+                    loadParkings();
+                }
+            );
+
+            $('#paginationContainer').html(html);
+        }
+
+        function editParking(parkId) {
+            http.get(API.PARKINGS.GET(parkId))
+                .then(res => {
+                    const parking = res.data;
+                    $('#parkingModalTitle').text('编辑车位');
+                    $('#parkId').val(parking.parkId);
+                    $('#parkNum').val(parking.parkNum);
+                    $('#parkType').val(parking.parkType);
+                    $('#parkStatus').val(parking.parkStatus);
+                    parkingModal.show();
+                })
+                .catch(err => console.error('获取车位信息失败：', err));
+        }
+
+        function saveParking() {
+            const parkId = $('#parkId').val();
+            const parkNum = $('#parkNum').val().trim();
+            const parkType = $('#parkType').val();
+            const parkStatus = $('#parkStatus').val();
+
+            if (!parkNum) {
+                Utils.showError('请填写车位编号');
+                return;
+            }
+
+            const data = {
+                parkNum,
+                parkType,
+                parkStatus
+            };
+
+            const request = parkId
+                ? http.put(API.PARKINGS.UPDATE(parkId), data)
+                : http.post(API.PARKINGS.CREATE, data);
+
+            $('#saveParkingBtn').prop('disabled', true).text('保存中...');
+
+            request
+                .then(() => {
+                    Utils.showSuccess(parkId ? '修改成功' : '新增成功');
+                    parkingModal.hide();
+                    loadParkings();
+                })
+                .catch(err => console.error('保存失败：', err))
+                .finally(() => {
+                    $('#saveParkingBtn').prop('disabled', false).text('保存');
+                });
+        }
+
+        function deleteParking(parkId, parkNum) {
+            Utils.confirm(`确定要删除车位"${parkNum}"吗？`, () => {
+                http.delete(API.PARKINGS.DELETE(parkId))
+                    .then(() => {
+                        Utils.showSuccess('删除成功');
+                        loadParkings();
+                    })
+                    .catch(err => console.error('删除失败：', err));
+            });
+        }
+
+        // 加载业主列表
+        function loadOwnersList() {
+            http.get(API.OWNERS.LIST, { params: { pageNum: 1, pageSize: 1000 } })
+                .then(res => {
+                    const owners = res.data.records || [];
+                    let html = '<option value="">请选择业主</option>';
+                    owners.forEach(owner => {
+                        html += `<option value="${owner.userId}">${owner.username} (${owner.phone})</option>`;
+                    });
+                    $('#assignUserId').html(html);
+                })
+                .catch(err => console.error('加载业主列表失败：', err));
+        }
+
+        // 显示分配模态框
+        function showAssignModal(parkId, parkNum) {
+            $('#assignParkId').val(parkId);
+            $('#assignParkNum').val(parkNum);
+            $('#assignUserId').val('');
+            $('#assignCarNum').val('');
+            assignModal.show();
+        }
+
+        // 分配车位
+        function assignParking() {
+            const parkId = $('#assignParkId').val();
+            const userId = $('#assignUserId').val();
+            const carNumber = $('#assignCarNum').val().trim();
+
+            if (!userId) {
+                Utils.showError('请选择业主');
+                return;
+            }
+
+            $('#confirmAssignBtn').prop('disabled', true).text('分配中...');
+
+            http.post(API.PARKINGS.ASSIGN, null, {
+                params: { parkId, userId, carNumber }  // 改为carNumber，与后端参数名一致
+            })
+            .then(() => {
+                Utils.showSuccess('分配成功');
+                assignModal.hide();
+                loadParkings();
+            })
+            .catch(err => console.error('分配失败：', err))
+            .finally(() => {
+                $('#confirmAssignBtn').prop('disabled', false).text('确认分配');
+            });
+        }
+
+        // 归还车位
+        function returnParking(parkId, parkNum) {
+            Utils.confirm(`确定要归还车位"${parkNum}"吗？`, () => {
+                http.post(API.PARKINGS.RETURN, null, {
+                    params: { parkId }
+                })
+                .then(() => {
+                    Utils.showSuccess('归还成功');
+                    loadParkings();
+                })
+                .catch(err => console.error('归还失败：', err));
+            });
+        }
+    </script>
+</body>
+</html>

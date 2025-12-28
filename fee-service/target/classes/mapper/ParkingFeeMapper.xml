@@ -5,7 +5,17 @@
 <mapper namespace="com.parking.fee.mapper.ParkingFeeMapper">
 
     <select id="findByPage" resultType="com.parking.fee.entity.ParkingFee">
-        SELECT * FROM fee_park
+        SELECT
+            fee_id AS feeId,
+            user_id AS userId,
+            park_id AS parkId,
+            pay_park_month AS payParkMonth,
+            pay_park_money AS payParkMoney,
+            pay_park_status AS payParkStatus,
+            pay_time AS payTime,
+            create_time AS createTime,
+            update_time AS updateTime
+        FROM fee_park
         <where>
             <if test="userId != null">
                 AND user_id = #{userId}

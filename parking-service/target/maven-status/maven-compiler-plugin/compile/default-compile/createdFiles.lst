@@ -3,7 +3,9 @@ com\parking\parking\entity\ParkingFee.class
 com\parking\parking\mapper\OwnerParkingMapper.class
 com\parking\parking\client\UserServiceClientFallback.class
 com\parking\parking\entity\ParkingSpace.class
+com\parking\parking\messaging\ParkingEventPublisher.class
 com\parking\parking\client\UserServiceClient.class
+com\parking\parking\event\ParkingAssignedEvent.class
 com\parking\parking\entity\OwnerParking.class
 com\parking\parking\common\Result.class
 com\parking\parking\config\RestTemplateConfig.class
@@ -12,6 +14,7 @@ com\parking\parking\mapper\ParkingFeeMapper.class
 com\parking\parking\ParkingServiceApplication.class
 com\parking\parking\controller\ParkingController.class
 com\parking\parking\service\ParkingService.class
+com\parking\parking\config\RabbitMQConfig.class
 com\parking\parking\mapper\ParkingSpaceMapper.class
 com\parking\parking\common\PageResult.class
 com\parking\parking\service\GenPassword.class

@@ -14,6 +14,9 @@ public interface OwnerParkingMapper {
     @Select("SELECT * FROM owner_parking WHERE user_id = #{userId} AND payment_status = '1'")
     OwnerParking findByUserIdAndActive(@Param("userId") Long userId);
 
+    @Select("SELECT * FROM owner_parking WHERE park_id = #{parkId} AND payment_status = '1'")
+    OwnerParking findByParkIdAndActive(@Param("parkId") Long parkId);
+
     @Select("SELECT * FROM owner_parking WHERE user_id = #{userId} ORDER BY id DESC LIMIT 1")
     OwnerParking findByUserId(@Param("userId") Long userId);
 
@@ -25,6 +28,6 @@ public interface OwnerParkingMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
     int insert(OwnerParking ownerParking);
 
-    @Update("UPDATE owner_parking SET payment_status=#{paymentStatus} WHERE id=#{id}")
+    @Update("UPDATE owner_parking SET payment_status=#{paymentStatus}, car_num=#{carNum}, exit_time=#{exitTime} WHERE id=#{id}")
     int update(OwnerParking ownerParking);
 }

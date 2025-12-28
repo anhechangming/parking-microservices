@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业主主页 - 停车管理系统</title>
+
+    <link href="../libs/bootstrap.min.css" rel="stylesheet">
+    <link href="../libs/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="toastContainer"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-success">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-p-square-fill"></i> 停车管理系统 - 业主端
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="usernameDisplay"></span>
+                </span>
+                <button class="btn btn-outline-light btn-sm" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="dashboard.html">
+                                <i class="bi bi-speedometer2"></i> 我的主页
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="my-parking.html">
+                                <i class="bi bi-car-front"></i> 我的车位
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="my-fees.html">
+                                <i class="bi bi-cash-coin"></i> 我的费用
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-10 ms-sm-auto content-wrapper">
+                <h2 class="page-title">我的主页</h2>
+
+                <!-- 我的车位信息 -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-car-front"></i> 我的车位信息
+                            </div>
+                            <div class="card-body" id="parkingInfo">
+                                <!-- 动态加载 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 未缴费用 -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-exclamation-triangle text-danger"></i> 未缴费用
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>费用月份</th>
+                                                <th>缴费金额</th>
+                                                <th>状态</th>
+                                                <th>创建时间</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="unpaidFeesBody">
+                                            <!-- 动态加载 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快捷操作 -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-grid"></i> 快捷操作
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <a href="my-parking.html" class="btn btn-outline-primary w-100 p-3">
+                                            <i class="bi bi-car-front fs-1 d-block mb-2"></i>
+                                            查看我的车位
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <a href="my-fees.html" class="btn btn-outline-success w-100 p-3">
+                                            <i class="bi bi-cash-coin fs-1 d-block mb-2"></i>
+                                            查看费用记录
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../libs/jquery.min.js"></script>
+    <script src="../libs/bootstrap.bundle.min.js"></script>
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            if (!Auth.checkAuth('owner')) return;
+
+            $('#usernameDisplay').text(Auth.getUsername());
+            $('#logoutBtn').click(() => Utils.confirm('确定要退出登录吗？', () => Auth.logout()));
+
+            loadMyParking();
+            loadUnpaidFees();
+        });
+
+        // 加载我的车位信息
+        function loadMyParking() {
+            const userId = Auth.getUserId();
+
+            http.get(API.OWNER_PARKING.MY_PARKING, { params: { userId } })
+                .then(res => {
+                    if (res.data && res.data.parkingSpace) {
+                        const parking = res.data.parkingSpace;
+                        const record = res.data.ownerParking;
+
+                        const html = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>车位编号：</strong>${parking.parkNum}</p>
+                                    <p><strong>车位类型：</strong>${DICT.PARK_TYPE[parking.parkType]}</p>
+                                    <p><strong>车位状态：</strong>${DICT.PARK_STATUS[parking.parkStatus]}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>车牌号：</strong>${record.carNum || '未填写'}</p>
+                                    <p><strong>入场时间：</strong>${Utils.formatDateTime(record.entryTime)}</p>
+                                    <p><strong>停车天数：</strong>${record.parkingDays || 0} 天</p>
+                                </div>
+                            </div>
+                            <a href="my-parking.html" class="btn btn-primary btn-sm">
+                                <i class="bi bi-eye"></i> 查看详情
+                            </a>
+                        `;
+
+                        $('#parkingInfo').html(html);
+                    } else {
+                        $('#parkingInfo').html(`
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                <p>您还没有分配车位</p>
+                            </div>
+                        `);
+                    }
+                })
+                .catch(err => {
+                    console.error('加载车位信息失败：', err);
+                    $('#parkingInfo').html(`
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                            <p>您还没有分配车位</p>
+                        </div>
+                    `);
+                });
+        }
+
+        // 加载未缴费用
+        function loadUnpaidFees() {
+            const userId = Auth.getUserId();
+
+            http.get(API.OWNER_FEES.UNPAID, { params: { userId } })
+                .then(res => {
+                    if (res.data && res.data.length > 0) {
+                        let html = '';
+                        res.data.forEach(fee => {
+                            html += `
+                                <tr>
+                                    <td>${fee.payParkMonth}</td>
+                                    <td class="text-danger fw-bold">${Utils.formatMoney(fee.payParkMoney)}</td>
+                                    <td>${DICT.PAY_STATUS[fee.payParkStatus]}</td>
+                                    <td>${Utils.formatDateTime(fee.createTime)}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success" onclick="payFee(${fee.feeId}, ${fee.payParkMoney})">
+                                            <i class="bi bi-credit-card"></i> 立即缴费
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+
+                        $('#unpaidFeesBody').html(html);
+                    } else {
+                        $('#unpaidFeesBody').html(`
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-check-circle text-success fs-1 d-block mb-2"></i>
+                                    暂无未缴费用
+                                </td>
+                            </tr>
+                        `);
+                    }
+                })
+                .catch(err => {
+                    console.error('加载未缴费用失败：', err);
+                    $('#unpaidFeesBody').html(Utils.emptyData(5));
+                });
+        }
+
+        // 缴费
+        function payFee(feeId, amount) {
+            Utils.confirm(`确定要缴纳费用 ${Utils.formatMoney(amount)} 吗？`, () => {
+                const userId = Auth.getUserId();
+
+                http.post(API.OWNER_FEES.PAY, null, {
+                    params: { parkFeeId: feeId, userId }
+                })
+                .then(() => {
+                    Utils.showSuccess('缴费成功！');
+                    loadUnpaidFees();
+                })
+                .catch(err => {
+                    console.error('缴费失败：', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>费用管理 - 停车管理系统</title>
+
+    <link href="../libs/bootstrap.min.css" rel="stylesheet">
+    <link href="../libs/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="toastContainer"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-p-square-fill"></i> 停车管理系统 - 管理员
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="usernameDisplay"></span>
+                </span>
+                <button class="btn btn-outline-light btn-sm" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="dashboard.html">
+                                <i class="bi bi-speedometer2"></i> 控制台
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="owners.html">
+                                <i class="bi bi-people"></i> 业主管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="parkings.html">
+                                <i class="bi bi-car-front"></i> 车位管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="fees.html">
+                                <i class="bi bi-cash-coin"></i> 费用管理
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-10 ms-sm-auto content-wrapper">
+                <h2 class="page-title">费用管理</h2>
+
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <select class="form-select" id="statusFilter" style="width: 150px;">
+                            <option value="">全部状态</option>
+                            <option value="0">未缴费</option>
+                            <option value="1">已缴费</option>
+                        </select>
+                        <button class="btn btn-primary" id="searchBtn">
+                            <i class="bi bi-search"></i> 查询
+                        </button>
+                    </div>
+                    <button class="btn btn-success" id="addFeeBtn">
+                        <i class="bi bi-plus-lg"></i> 新增费用
+                    </button>
+                </div>
+
+                <!-- 费用列表 -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>费用ID</th>
+                                        <th>业主姓名</th>
+                                        <th>车位编号</th>
+                                        <th>费用月份</th>
+                                        <th>缴费金额</th>
+                                        <th>缴费状态</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feeTableBody">
+                                    <!-- 动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 分页 -->
+                        <div id="paginationContainer"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 新增费用模态框 -->
+    <div class="modal fade" id="feeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">新增费用</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="feeForm">
+                        <div class="mb-3">
+                            <label for="userId" class="form-label">业主 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="userId" required>
+                                <option value="">请选择业主</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="parkId" class="form-label">车位 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="parkId" required disabled>
+                                <option value="">请先选择业主</option>
+                            </select>
+                            <div class="form-text">请先选择业主，然后选择该业主的车位</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="payParkMonth" class="form-label">费用月份 <span class="text-danger">*</span></label>
+                            <input type="month" class="form-control" id="payParkMonth" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="payParkMoney" class="form-label">缴费金额 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="payParkMoney" step="0.01" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveFeeBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../libs/jquery.min.js"></script>
+    <script src="../libs/bootstrap.bundle.min.js"></script>
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+
+    <script>
+        let currentPage = 1;
+        let pageSize = 10;
+        let statusFilter = '';
+        let feeModal;
+
+        $(document).ready(function() {
+            if (!Auth.checkAuth('admin')) return;
+
+            $('#usernameDisplay').text(Auth.getUsername());
+            $('#logoutBtn').click(() => Utils.confirm('确定要退出登录吗？', () => Auth.logout()));
+
+            feeModal = new bootstrap.Modal('#feeModal');
+
+            loadFees();
+            loadOwners();
+
+            $('#searchBtn').click(() => {
+                statusFilter = $('#statusFilter').val();
+                currentPage = 1;
+                loadFees();
+            });
+
+            $('#addFeeBtn').click(() => {
+                $('#feeForm')[0].reset();
+                $('#parkId').prop('disabled', true).html('<option value="">请先选择业主</option>');
+                feeModal.show();
+            });
+
+            // 监听业主选择变化，加载对应的车位
+            $('#userId').change(function() {
+                const userId = $(this).val();
+                if (userId) {
+                    loadUserParkings(userId);
+                } else {
+                    $('#parkId').prop('disabled', true).html('<option value="">请先选择业主</option>');
+                }
+            });
+
+            $('#saveFeeBtn').click(saveFee);
+        });
+
+        function loadFees() {
+            const params = {
+                pageNum: currentPage,
+                pageSize: pageSize
+            };
+
+            if (statusFilter !== '') {
+                params.payStatus = statusFilter;  // 修改为payStatus，与后端参数名一致
+            }
+
+            http.get(API.FEES.LIST, { params })
+                .then(res => {
+                    renderFeeTable(res.data.records || []);
+                    renderPagination(res.data);
+                })
+                .catch(err => console.error('加载费用列表失败：', err));
+        }
+
+        function loadOwners() {
+            http.get(API.OWNERS.LIST, { params: { pageNum: 1, pageSize: 1000 } })
+                .then(res => {
+                    const owners = res.data.records || [];
+                    let html = '<option value="">请选择业主</option>';
+                    owners.forEach(owner => {
+                        html += `<option value="${owner.userId}">${owner.username} (${owner.phone})</option>`;
+                    });
+                    $('#userId').html(html);
+                })
+                .catch(err => console.error('加载业主列表失败：', err));
+        }
+
+        function loadUserParkings(userId) {
+            $('#parkId').prop('disabled', true).html('<option value="">加载中...</option>');
+
+            http.get(API.OWNER_PARKING.MY_PARKING, { params: { userId } })
+                .then(res => {
+                    // 后端返回的是对象 {ownerParking: {...}, parkingSpace: {...}}
+                    const data = res.data;
+
+                    if (!data || !data.parkingSpace) {
+                        $('#parkId').html('<option value="">该业主暂无车位</option>');
+                        Utils.showError('该业主暂无车位，请先分配车位');
+                    } else {
+                        const parking = data.parkingSpace;
+                        let parkTypeText = '普通车位';
+                        if (parking.parkType === '1') parkTypeText = '充电车位';
+                        else if (parking.parkType === '2') parkTypeText = '无障碍车位';
+
+                        let html = `<option value="">请选择车位</option>`;
+                        html += `<option value="${parking.parkId}">${parking.parkNum} (${parkTypeText})</option>`;
+                        $('#parkId').html(html).prop('disabled', false);
+                    }
+                })
+                .catch(err => {
+                    console.error('加载车位列表失败：', err);
+                    $('#parkId').html('<option value="">加载失败</option>');
+                    Utils.showError('加载车位列表失败');
+                });
+        }
+
+        function renderFeeTable(fees) {
+            if (!fees || fees.length === 0) {
+                $('#feeTableBody').html(Utils.emptyData(8));
+                return;
+            }
+
+            let html = '';
+            fees.forEach(fee => {
+                html += `
+                    <tr>
+                        <td>${fee.feeId}</td>
+                        <td>${fee.username || '-'}</td>
+                        <td>${fee.parkNum || '-'}</td>
+                        <td>${fee.payParkMonth}</td>
+                        <td class="text-danger fw-bold">${Utils.formatMoney(fee.payParkMoney)}</td>
+                        <td>${DICT.PAY_STATUS[fee.payParkStatus]}</td>
+                        <td>${Utils.formatDateTime(fee.createTime)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteFee(${fee.feeId})">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $('#feeTableBody').html(html);
+        }
+
+        function renderPagination(pageData) {
+            const html = Utils.buildPagination(
+                pageData.current || currentPage,
+                pageData.total || 0,
+                pageData.size || pageSize,
+                (page) => {
+                    currentPage = page;
+                    loadFees();
+                }
+            );
+
+            $('#paginationContainer').html(html);
+        }
+
+        function saveFee() {
+            const userId = $('#userId').val();
+            const parkId = $('#parkId').val();
+            const payParkMonth = $('#payParkMonth').val();
+            const payParkMoney = $('#payParkMoney').val();
+
+            if (!userId || !parkId || !payParkMonth || !payParkMoney) {
+                Utils.showError('请填写完整信息');
+                return;
+            }
+
+            const data = {
+                userId: parseInt(userId),
+                parkId: parseInt(parkId),
+                payParkMonth,
+                payParkMoney: parseFloat(payParkMoney)
+            };
+
+            $('#saveFeeBtn').prop('disabled', true).text('保存中...');
+
+            http.post(API.FEES.CREATE, data)
+                .then(() => {
+                    Utils.showSuccess('新增成功');
+                    feeModal.hide();
+                    loadFees();
+                })
+                .catch(err => console.error('保存失败：', err))
+                .finally(() => {
+                    $('#saveFeeBtn').prop('disabled', false).text('保存');
+                });
+        }
+
+        function deleteFee(feeId) {
+            Utils.confirm('确定要删除此费用记录吗？', () => {
+                http.delete(API.FEES.DELETE(feeId))
+                    .then(() => {
+                        Utils.showSuccess('删除成功');
+                        loadFees();
+                    })
+                    .catch(err => console.error('删除失败：', err));
+            });
+        }
+    </script>
+</body>
+</html>

@@ -82,12 +82,47 @@ services:
       - parking-network
     restart: unless-stopped
 
-  # Nacos 3.1.0 服务注册与发现中心 (阶段2配置)
+  # Nacos配置中心专用数据库 (阶段7配置 - 数据持久化)
+  nacos-db:
+    image: mysql:8.4
+    container_name: nacos-db
+    environment:
+      MYSQL_ROOT_PASSWORD: nacos_root_pass
+      MYSQL_DATABASE: nacos_config
+      MYSQL_USER: nacos
+      MYSQL_PASSWORD: nacos_pass
+      TZ: Asia/Shanghai
+    ports:
+      - "3310:3306"
+    volumes:
+      - nacos-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pnacos_root_pass"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - parking-network
+    restart: unless-stopped
+
+  # Nacos 3.1.0 服务注册与发现中心 (阶段7配置 - MySQL持久化)
   nacos:
     image: nacos/nacos-server:v3.1.0
     container_name: parking-nacos
     environment:
       - MODE=standalone  # 单机模式
+      - PREFER_HOST_MODE=hostname
+      - SPRING_DATASOURCE_PLATFORM=mysql  # 使用MySQL存储
+      - MYSQL_SERVICE_HOST=nacos-db
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_DB_NAME=nacos_config
+      - MYSQL_SERVICE_USER=nacos
+      - MYSQL_SERVICE_PASSWORD=nacos_pass
+      - MYSQL_SERVICE_DB_PARAM=characterEncoding=utf8&connectTimeout=10000&socketTimeout=30000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
       - NACOS_AUTH_ENABLE=false  # 暂时禁用认证，方便开发调试
       - NACOS_AUTH_TOKEN=SecretKey012345678901234567890123456789012345678901234567890123456789
       - NACOS_AUTH_IDENTITY_KEY=serverIdentity
@@ -96,13 +131,43 @@ services:
       - JVM_XMS=512m  # 初始内存
       - JVM_XMX=512m  # 最大内存
     ports:
+      - "8080:8080"  # 控制台端口
       - "8848:8848"  # HTTP端口
       - "9848:9848"  # gRPC端口
+    volumes:
+      - nacos-data:/home/nacos/data  # 持久化数据
+      - nacos-logs:/home/nacos/logs  # 持久化日志
+    networks:
+      - parking-network
+    restart: unless-stopped
+    depends_on:
+      nacos-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # RabbitMQ 3.13 消息队列 (阶段6配置 - 异步消息通信)
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: parking-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+      - TZ=Asia/Shanghai
+    ports:
+      - "5672:5672"   # AMQP端口
+      - "15672:15672" # 管理界面端口
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - parking-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/"]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -166,6 +231,10 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root_password
       - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=admin123
       - TZ=Asia/Shanghai
     ports:
       - "8082:8082"
@@ -176,6 +245,8 @@ services:
       parking-db:
         condition: service_healthy
       nacos:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   # 停车业务服务 - 实例2（用于测试负载均衡）
@@ -190,6 +261,10 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root_password
       - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=admin123
       - TZ=Asia/Shanghai
     ports:
       - "8092:8092"
@@ -200,6 +275,8 @@ services:
       parking-db:
         condition: service_healthy
       nacos:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   # 费用服务
@@ -213,6 +290,10 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root_password
       - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=admin123
       - TZ=Asia/Shanghai
     ports:
       - "8083:8083"
@@ -224,6 +305,8 @@ services:
         condition: service_healthy
       nacos:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   # API Gateway Service (Phase 4)
   gateway-service:
@@ -232,11 +315,12 @@ services:
       dockerfile: Dockerfile
     container_name: parking-gateway-service
     environment:
+      - SERVER_PORT=9000  # Gateway端口（避免与Nacos控制台8080冲突）
       - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
       - JWT_SECRET=parking-management-system-jwt-secret-key-2025-microservices-project
       - TZ=Asia/Shanghai
     ports:
-      - "8080:8080"  # Gateway统一入口
+      - "9000:9000"  # Gateway统一入口
     networks:
       - parking-network
     restart: always
@@ -244,11 +328,25 @@ services:
       nacos:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health", "||", "exit", "1"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9000/actuator/health", "||", "exit", "1"]
       interval: 30s
       timeout: 3s
       retries: 3
       start_period: 40s
+
+  # Frontend Web Service (阶段7 - 前端页面)
+  frontend-web:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+    container_name: parking-frontend-web
+    ports:
+      - "80:80"  # 前端页面端口
+    networks:
+      - parking-network
+    restart: always
+    depends_on:
+      - gateway-service
 
 networks:
   parking-network:
@@ -260,4 +358,12 @@ volumes:
   parking-data:
     driver: local
   fee-data:
+    driver: local
+  nacos-db-data:
+    driver: local
+  nacos-data:
+    driver: local
+  nacos-logs:
+    driver: local
+  rabbitmq-data:
     driver: local

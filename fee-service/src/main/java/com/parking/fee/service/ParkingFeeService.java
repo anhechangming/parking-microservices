@@ -2,13 +2,16 @@ package com.parking.fee.service;
 
 import com.parking.fee.common.PageResult;
 import com.parking.fee.entity.ParkingFee;
+import com.parking.fee.event.FeePaidEvent;
 import com.parking.fee.mapper.ParkingFeeMapper;
+import com.parking.fee.messaging.FeeEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 停车费服务
@@ -27,6 +30,9 @@ public class ParkingFeeService {
     @Autowired
     private com.parking.fee.client.ParkingServiceClient parkingServiceClient;
 
+    @Autowired
+    private FeeEventPublisher feeEventPublisher;
+
     /**
      * 分页查询停车费列表
      *
@@ -40,6 +46,36 @@ public class ParkingFeeService {
         int offset = (pageNum - 1) * pageSize;
         List<ParkingFee> records = parkingFeeMapper.findByPage(offset, pageSize, userId, payStatus);
         int total = parkingFeeMapper.countByConditions(userId, payStatus);
+
+        // 【微服务架构】通过Feign客户端填充关联数据（用户名、车位编号）
+        for (ParkingFee fee : records) {
+            try {
+                // 调用user-service获取用户名
+                com.parking.fee.common.Result<java.util.Map<String, Object>> userResult =
+                    userServiceClient.getOwnerById(fee.getUserId());
+                if (userResult != null && userResult.getCode() == 200 && userResult.getData() != null) {
+                    fee.setUsername((String) userResult.getData().get("username"));
+                }
+            } catch (Exception e) {
+                org.slf4j.LoggerFactory.getLogger(ParkingFeeService.class)
+                    .warn("获取用户信息失败，userId={}: {}", fee.getUserId(), e.getMessage());
+                fee.setUsername("未知");
+            }
+
+            try {
+                // 调用parking-service获取车位编号
+                com.parking.fee.common.Result<java.util.Map<String, Object>> parkingResult =
+                    parkingServiceClient.getUserParkingRecord(fee.getUserId());
+                if (parkingResult != null && parkingResult.getCode() == 200 && parkingResult.getData() != null) {
+                    fee.setParkNum((String) parkingResult.getData().get("parkNum"));
+                }
+            } catch (Exception e) {
+                org.slf4j.LoggerFactory.getLogger(ParkingFeeService.class)
+                    .warn("获取车位信息失败，userId={}: {}", fee.getUserId(), e.getMessage());
+                fee.setParkNum("未知");
+            }
+        }
+
         return new PageResult<>(pageNum, pageSize, total, records);
     }
 
@@ -166,7 +202,30 @@ public class ParkingFeeService {
         // 业务验证通过，执行缴费
         parkingFee.setPayParkStatus("1");
         parkingFee.setPayTime(new Date());
-        return parkingFeeMapper.update(parkingFee) > 0;
+        boolean updateSuccess = parkingFeeMapper.update(parkingFee) > 0;
+
+        if (updateSuccess) {
+            // 【阶段6】发布费用缴纳事件到RabbitMQ，用于发送缴费通知、更新统计等
+            try {
+                FeePaidEvent event = new FeePaidEvent(
+                        UUID.randomUUID().toString(),  // 事件ID
+                        parkingFee.getFeeId(),         // 费用ID
+                        userId,                        // 业主ID
+                        parkingFee.getParkId(),        // 车位ID
+                        parkingFee.getPayParkMonth(),  // 缴费月份
+                        parkingFee.getPayParkMoney(),  // 缴费金额
+                        parkingFee.getPayTime(),       // 缴费时间
+                        new Date()                     // 事件发生时间
+                );
+                feeEventPublisher.publishFeePaidEvent(event);
+            } catch (Exception e) {
+                // 异步消息发送失败不影响主业务流程，只记录日志
+                org.slf4j.LoggerFactory.getLogger(ParkingFeeService.class)
+                        .error("发布费用缴纳事件失败，但缴费已成功: {}", e.getMessage());
+            }
+        }
+
+        return updateSuccess;
     }
 
     /**

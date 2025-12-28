@@ -27,8 +27,8 @@ public interface ParkingFeeMapper {
                                         @Param("parkId") Long parkId,
                                         @Param("month") String month);
 
-    @Insert("INSERT INTO fee_park(user_id, park_id, pay_park_month, pay_park_money, pay_park_status, remark) " +
-            "VALUES(#{userId}, #{parkId}, #{payParkMonth}, #{payParkMoney}, #{payParkStatus}, #{remark})")
+    @Insert("INSERT INTO fee_park(user_id, park_id, pay_park_month, pay_park_money, pay_park_status) " +
+            "VALUES(#{userId}, #{parkId}, #{payParkMonth}, #{payParkMoney}, #{payParkStatus})")
     @Options(useGeneratedKeys = true, keyProperty = "feeId", keyColumn = "fee_id")
     int insert(ParkingFee parkingFee);
 

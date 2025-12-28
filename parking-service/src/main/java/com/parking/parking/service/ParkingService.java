@@ -3,14 +3,17 @@ package com.parking.parking.service;
 import com.parking.parking.common.PageResult;
 import com.parking.parking.entity.OwnerParking;
 import com.parking.parking.entity.ParkingSpace;
+import com.parking.parking.event.ParkingAssignedEvent;
 import com.parking.parking.mapper.OwnerParkingMapper;
 import com.parking.parking.mapper.ParkingSpaceMapper;
+import com.parking.parking.messaging.ParkingEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 车位服务
@@ -28,6 +31,9 @@ public class ParkingService {
 
     @Autowired
     private com.parking.parking.client.UserServiceClient userServiceClient;
+
+    @Autowired
+    private ParkingEventPublisher parkingEventPublisher;
 
     /**
      * 分页查询车位列表
@@ -156,6 +162,23 @@ public class ParkingService {
             // 更新车位状态为已分配
             parking.setParkStatus("1");
             parkingSpaceMapper.update(parking);
+
+            // 【阶段6】发布车位分配事件到RabbitMQ，通知费用服务自动创建费用记录
+            try {
+                ParkingAssignedEvent event = new ParkingAssignedEvent(
+                        UUID.randomUUID().toString(),  // 事件ID
+                        ownerParking.getId(),          // 业主车位关联ID
+                        userId,                        // 业主ID
+                        parkId,                        // 车位ID
+                        carNumber,                     // 车牌号
+                        ownerParking.getEntryTime(),   // 入场时间
+                        new Date()                     // 事件发生时间
+                );
+                parkingEventPublisher.publishParkingAssignedEvent(event);
+            } catch (Exception e) {
+                // 异步消息发送失败不影响主业务流程，只记录日志
+                System.err.println("发布车位分配事件失败，但车位分配已成功: " + e.getMessage());
+            }
         }
 
         return insertSuccess;
@@ -200,5 +223,56 @@ public class ParkingService {
      */
     public OwnerParking getOwnerParking(Long userId) {
         return ownerParkingMapper.findByUserId(userId);
+    }
+
+    /**
+     * 根据车位ID退还车位
+     *
+     * @param parkId 车位ID
+     * @return 是否成功
+     */
+    @Transactional
+    public boolean returnParkingByParkId(Long parkId) {
+        // 根据车位ID查询业主停车记录
+        OwnerParking ownerParking = ownerParkingMapper.findByParkIdAndActive(parkId);
+
+        if (ownerParking == null) {
+            throw new RuntimeException("该车位未分配或已退还");
+        }
+
+        // 更新关联状态为已退位
+        ownerParking.setPaymentStatus("0");
+        ownerParking.setExitTime(new Date());
+        boolean updateSuccess = ownerParkingMapper.update(ownerParking) > 0;
+
+        if (updateSuccess) {
+            // 更新车位状态为空闲
+            ParkingSpace parking = parkingSpaceMapper.findById(parkId);
+            if (parking != null) {
+                parking.setParkStatus("0");
+                parkingSpaceMapper.update(parking);
+            }
+        }
+
+        return updateSuccess;
+    }
+
+    /**
+     * 更新车牌号
+     *
+     * @param userId 业主ID
+     * @param carNum 新车牌号
+     * @return 是否成功
+     */
+    @Transactional
+    public boolean updateCarNumber(Long userId, String carNum) {
+        OwnerParking ownerParking = ownerParkingMapper.findByUserIdAndActive(userId);
+
+        if (ownerParking == null) {
+            throw new RuntimeException("该业主没有分配车位");
+        }
+
+        ownerParking.setCarNum(carNum);
+        return ownerParkingMapper.update(ownerParking) > 0;
     }
 }

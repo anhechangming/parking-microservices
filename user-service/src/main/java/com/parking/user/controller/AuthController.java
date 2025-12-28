@@ -3,6 +3,7 @@ package com.parking.user.controller;
 import com.parking.user.common.Result;
 import com.parking.user.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -65,5 +66,48 @@ public class AuthController {
     @PostMapping("/logout")
     public Result<Void> logout() {
         return Result.success("退出成功", null);
+    }
+
+    /**
+     * 临时测试：生成BCrypt密码哈希
+     * 仅用于测试，生产环境应删除
+     *
+     * @param password 原始密码
+     * @return BCrypt哈希
+     */
+    @GetMapping("/test/bcrypt")
+    public Result<String> generateBCryptHash(@RequestParam String password) {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String hash = encoder.encode(password);
+        System.out.println("原始密码: " + password);
+        System.out.println("BCrypt哈希: " + hash);
+        System.out.println("验证测试: " + encoder.matches(password, hash));
+        return Result.success("BCrypt哈希生成成功", hash);
+    }
+
+    /**
+     * 临时测试：快速创建管理员账号
+     * 仅用于测试，生产环境应删除
+     */
+    @PostMapping("/test/create-admin")
+    public Result<String> createTestAdmin(@RequestParam String loginName,
+                                           @RequestParam String password,
+                                           @RequestParam String username) {
+        try {
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+            String hashedPassword = encoder.encode(password);
+
+            // 使用原生JDBC插入，避免依赖Mapper
+            String sql = "INSERT INTO sys_user (login_name, password, username, status) VALUES ('"
+                + loginName + "', '" + hashedPassword + "', '" + username + "', '0')";
+
+            System.out.println("【创建管理员】SQL: " + sql);
+            System.out.println("【创建管理员】loginName=" + loginName + ", password=" + password + ", hashedPassword=" + hashedPassword);
+
+            return Result.success("管理员创建SQL已生成，请手动执行", sql);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error("创建失败: " + e.getMessage());
+        }
     }
 }

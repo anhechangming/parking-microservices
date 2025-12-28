@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+  <html lang="zh-CN">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>停车管理系统 - 登录</title>
+
+      <!-- Bootstrap 5 CSS -->
+      <link href="libs/bootstrap.min.css" rel="stylesheet">
+      <!-- Bootstrap Icons -->
+      <link href="libs/bootstrap-icons.min.css" rel="stylesheet">
+      <!-- 自定义样式 -->
+      <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+      <!-- Toast容器 -->
+      <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+      <!-- 登录页面 -->
+      <div class="login-wrapper">
+          <div class="login-card">
+              <div class="card">
+                  <div class="card-body">
+                      <!-- 标题 -->
+                      <h1 class="login-title">
+                          <i class="bi bi-p-square-fill text-primary"></i>
+                          停车管理系统
+                      </h1>
+                      <p class="login-subtitle">Parking Management System</p>
+
+                      <!-- 角色选择标签页 -->
+                      <ul class="nav nav-pills nav-fill role-tabs" role="tablist">      
+                          <li class="nav-item" role="presentation">
+                              <button class="nav-link active" id="admin-tab" data-bs-toggle="pill" data-bs-target="#admin" type="button" role="tab">
+                                  <i class="bi bi-shield-lock"></i> 管理员登录
+                              </button>
+                          </li>
+                          <li class="nav-item" role="presentation">
+                              <button class="nav-link" id="owner-tab" data-bs-toggle="pill" data-bs-target="#owner" type="button" role="tab">
+                                  <i class="bi bi-person"></i> 业主登录
+                              </button>
+                          </li>
+                      </ul>
+
+                      <!-- 登录表单 -->
+                      <div class="tab-content">
+                          <!-- 管理员登录 -->
+                          <div class="tab-pane fade show active" id="admin" role="tabpanel">
+                              <form id="adminLoginForm">
+                                  <div class="form-floating mb-3">
+                                      <input type="text" class="form-control" id="adminLoginName" placeholder="请输入登录账号" required>
+                                      <label for="adminLoginName"><i class="bi bi-person-circle"></i> 登录账号</label>
+                                  </div>
+                                  <div class="form-floating mb-4">
+                                      <input type="password" class="form-control" id="adminPassword" placeholder="请输入密码" required>
+                                      <label for="adminPassword"><i class="bi bi-lock"></i> 登录密码</label>
+                                  </div>
+                                  <button type="submit" class="btn btn-primary btn-login w-100">
+                                      <i class="bi bi-box-arrow-in-right"></i> 登录     
+                                  </button>
+                              </form>
+                          </div>
+
+                          <!-- 业主登录 -->
+                          <div class="tab-pane fade" id="owner" role="tabpanel">        
+                              <form id="ownerLoginForm">
+                                  <div class="form-floating mb-3">
+                                      <input type="text" class="form-control" id="ownerLoginName" placeholder="请输入登录账号" required>
+                                      <label for="ownerLoginName"><i class="bi bi-person-circle"></i> 登录账号</label>
+                                  </div>
+                                  <div class="form-floating mb-4">
+                                      <input type="password" class="form-control" id="ownerPassword" placeholder="请输入密码" required>
+                                      <label for="ownerPassword"><i class="bi bi-lock"></i> 登录密码</label>
+                                  </div>
+                                  <button type="submit" class="btn btn-primary btn-login w-100">
+                                      <i class="bi bi-box-arrow-in-right"></i> 登录     
+                                  </button>
+                              </form>
+                          </div>
+                      </div>
+
+                      <!-- 提示信息 -->
+                      <div class="mt-4 text-center text-muted small">
+                          <p class="mb-1">
+                              <i class="bi bi-info-circle"></i> 测试账号
+                          </p>
+                          <p class="mb-0">管理员: testadmin / admin123</p>
+                          <p class="mb-0">业主: owner_test005 / 123456</p>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- 版权信息 -->
+              <div class="text-center mt-3 text-white-50">
+                  <small>© 2025 停车管理系统. All rights reserved.</small>
+              </div>
+          </div>
+      </div>
+
+      <!-- jQuery -->
+      <script src="libs/jquery.min.js"></script>
+      <!-- Bootstrap 5 JS -->
+      <script src="libs/bootstrap.bundle.min.js"></script>
+      <!-- Axios -->
+      <script src="libs/axios.min.js"></script>
+
+      <!-- 公共配置 -->
+      <script src="js/config.js"></script>
+      <!-- 公共工具 -->
+      <script src="js/utils.js"></script>
+
+      <!-- 登录逻辑 -->
+      <script>
+          $(document).ready(function() {
+              if (Auth.isLoggedIn()) {
+                  const role = Auth.getRole();
+                  if (role === 'admin') {
+                      window.location.href = 'admin/dashboard.html';
+                  } else if (role === 'owner') {
+                      window.location.href = 'owner/dashboard.html';
+                  }
+                  return;
+              }
+
+              $('#adminLoginForm').submit(function(e) {
+                  e.preventDefault();
+                  const loginName = $('#adminLoginName').val().trim();
+                  const password = $('#adminPassword').val();
+                  if (!loginName || !password) {
+                      Utils.showError('请输入登录账号和密码');
+                      return;
+                  }
+                  const $submitBtn = $(this).find('button[type="submit"]');
+                  $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> 登录中...');
+                  http.post(API.AUTH.ADMIN_LOGIN, null, {
+                      params: { loginName, password }
+                  })
+                  .then(res => {
+                      Utils.showSuccess('登录成功！');
+                      Auth.saveLoginInfo(res.data.token, res.data.userId, res.data.username || loginName, 'admin');
+                      setTimeout(() => { window.location.href = 'admin/dashboard.html'; }, 500);
+                  })
+                  .catch(err => {
+                      console.error('登录失败：', err);
+                      Utils.showError('登录失败！请检查用户名和密码');
+                  })
+                  .finally(() => {
+                      $submitBtn.prop('disabled', false).html('<i class="bi bi-box-arrow-in-right"></i> 登录');
+                  });
+              });
+
+              $('#ownerLoginForm').submit(function(e) {
+                  e.preventDefault();
+                  const loginName = $('#ownerLoginName').val().trim();
+                  const password = $('#ownerPassword').val();
+                  if (!loginName || !password) {
+                      Utils.showError('请输入登录账号和密码');
+                      return;
+                  }
+                  const $submitBtn = $(this).find('button[type="submit"]');
+                  $submitBtn.prop('disabled', true).html('<span class="loading-spinner"></span> 登录中...');
+                  http.post(API.AUTH.OWNER_LOGIN, null, {
+                      params: { loginName, password }
+                  })
+                  .then(res => {
+                      Utils.showSuccess('登录成功！');
+                      Auth.saveLoginInfo(res.data.token, res.data.userId, res.data.username || loginName, 'owner');
+                      setTimeout(() => { window.location.href = 'owner/dashboard.html'; }, 500);
+                  })
+                  .catch(err => {
+                      console.error('登录失败：', err);
+                      Utils.showError('登录失败！请检查用户名和密码');
+                  })
+                  .finally(() => {
+                      $submitBtn.prop('disabled', false).html('<i class="bi bi-box-arrow-in-right"></i> 登录');
+                  });
+              });
+          });
+      </script>
+  </body>
+  </html>

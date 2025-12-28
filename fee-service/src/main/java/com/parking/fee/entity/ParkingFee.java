@@ -69,4 +69,16 @@ public class ParkingFee implements Serializable {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updateTime;
+
+    // ========== 以下字段用于前端显示，不映射到数据库 ==========
+
+    /**
+     * 业主姓名（关联查询字段，不存储在fee_park表）
+     */
+    private String username;
+
+    /**
+     * 车位编号（关联查询字段，不存储在fee_park表）
+     */
+    private String parkNum;
 }

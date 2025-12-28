@@ -4,10 +4,16 @@ D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\client\UserServiceClientFallback.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\common\PageResult.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\common\Result.java
+D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\config\RabbitMQConfig.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\config\RestTemplateConfig.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\controller\FeeController.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\controller\OwnerFeeController.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\entity\ParkingFee.java
+D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\event\FeePaidEvent.java
+D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\event\ParkingAssignedEvent.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\FeeServiceApplication.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\mapper\ParkingFeeMapper.java
+D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\messaging\FeeEventPublisher.java
+D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\messaging\NotificationConsumer.java
+D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\messaging\ParkingEventConsumer.java
 D:\桌面\PMS- Microservices\parking-microservices\fee-service\src\main\java\com\parking\fee\service\ParkingFeeService.java

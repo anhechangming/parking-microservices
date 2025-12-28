@@ -113,13 +113,22 @@ public class ParkingController {
     }
 
     /**
-     * 业主退车位
+     * 业主退车位（支持通过userId或parkId退还）
      */
     @PostMapping("/parkings/return")
-    public Result<Void> returnParking(@RequestParam Long userId) {
+    public Result<Void> returnParking(@RequestParam(required = false) Long userId,
+                                       @RequestParam(required = false) Long parkId) {
         try {
-            boolean success = parkingService.returnParking(userId);
-            return success ? Result.success("退位成功", null) : Result.error("退位失败");
+            // 优先使用parkId（管理员界面），如果没有则使用userId（业主界面）
+            if (parkId != null) {
+                boolean success = parkingService.returnParkingByParkId(parkId);
+                return success ? Result.success("退位成功", null) : Result.error("退位失败");
+            } else if (userId != null) {
+                boolean success = parkingService.returnParking(userId);
+                return success ? Result.success("退位成功", null) : Result.error("退位失败");
+            } else {
+                return Result.error("请提供userId或parkId参数");
+            }
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }

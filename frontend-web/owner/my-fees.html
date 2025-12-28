@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的费用 - 停车管理系统</title>
+
+    <link href="../libs/bootstrap.min.css" rel="stylesheet">
+    <link href="../libs/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="toastContainer"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-success">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-p-square-fill"></i> 停车管理系统 - 业主端
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="usernameDisplay"></span>
+                </span>
+                <button class="btn btn-outline-light btn-sm" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="dashboard.html">
+                                <i class="bi bi-speedometer2"></i> 我的主页
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="my-parking.html">
+                                <i class="bi bi-car-front"></i> 我的车位
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="my-fees.html">
+                                <i class="bi bi-cash-coin"></i> 我的费用
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-10 ms-sm-auto content-wrapper">
+                <h2 class="page-title">我的费用</h2>
+
+                <!-- 费用统计 -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-white bg-danger">
+                            <div class="card-header">
+                                <i class="bi bi-exclamation-circle"></i> 未缴费用
+                            </div>
+                            <div class="card-body">
+                                <h3 id="unpaidCount">0 笔</h3>
+                                <p class="mb-0" id="unpaidAmount">¥0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-success">
+                            <div class="card-header">
+                                <i class="bi bi-check-circle"></i> 已缴费用
+                            </div>
+                            <div class="card-body">
+                                <h3 id="paidCount">0 笔</h3>
+                                <p class="mb-0" id="paidAmount">¥0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-primary">
+                            <div class="card-header">
+                                <i class="bi bi-calculator"></i> 累计缴费
+                            </div>
+                            <div class="card-body">
+                                <h3 id="totalCount">0 笔</h3>
+                                <p class="mb-0" id="totalAmount">¥0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 费用列表 -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="unpaid-tab" data-bs-toggle="tab" href="#unpaid" role="tab">
+                                            未缴费用
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="paid-tab" data-bs-toggle="tab" href="#paid" role="tab">
+                                            已缴费用
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="card-body">
+                                <div class="tab-content">
+                                    <!-- 未缴费用 -->
+                                    <div class="tab-pane fade show active" id="unpaid" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>费用月份</th>
+                                                        <th>缴费金额</th>
+                                                        <th>状态</th>
+                                                        <th>创建时间</th>
+                                                        <th>操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="unpaidFeesBody">
+                                                    <!-- 动态加载 -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- 已缴费用 -->
+                                    <div class="tab-pane fade" id="paid" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>费用月份</th>
+                                                        <th>缴费金额</th>
+                                                        <th>状态</th>
+                                                        <th>创建时间</th>
+                                                        <th>缴费时间</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="paidFeesBody">
+                                                    <!-- 动态加载 -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../libs/jquery.min.js"></script>
+    <script src="../libs/bootstrap.bundle.min.js"></script>
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            if (!Auth.checkAuth('owner')) return;
+
+            $('#usernameDisplay').text(Auth.getUsername());
+            $('#logoutBtn').click(() => Utils.confirm('确定要退出登录吗？', () => Auth.logout()));
+
+            loadFeeStatistics();
+            loadUnpaidFees();
+            loadPaidFees();
+        });
+
+        function loadFeeStatistics() {
+            const userId = Auth.getUserId();
+
+            // 加载所有费用，然后在前端过滤统计
+            http.get(API.OWNER_FEES.MY_FEES, { params: { userId } })
+                .then(res => {
+                    const allFees = res.data || [];
+
+                    // 过滤未缴费
+                    const unpaidFees = allFees.filter(fee => fee.payParkStatus == 0);
+                    const unpaidCount = unpaidFees.length;
+                    const unpaidAmount = unpaidFees.reduce((sum, fee) => sum + fee.payParkMoney, 0);
+
+                    // 过滤已缴费
+                    const paidFees = allFees.filter(fee => fee.payParkStatus == 1);
+                    const paidCount = paidFees.length;
+                    const paidAmount = paidFees.reduce((sum, fee) => sum + fee.payParkMoney, 0);
+
+                    // 累计统计
+                    const totalCount = allFees.length;
+                    const totalAmount = allFees.reduce((sum, fee) => sum + fee.payParkMoney, 0);
+
+                    $('#unpaidCount').text(`${unpaidCount} 笔`);
+                    $('#unpaidAmount').text(Utils.formatMoney(unpaidAmount));
+                    $('#paidCount').text(`${paidCount} 笔`);
+                    $('#paidAmount').text(Utils.formatMoney(paidAmount));
+                    $('#totalCount').text(`${totalCount} 笔`);
+                    $('#totalAmount').text(Utils.formatMoney(totalAmount));
+                })
+                .catch(err => console.error('加载费用统计失败：', err));
+        }
+
+        function loadUnpaidFees() {
+            const userId = Auth.getUserId();
+
+            http.get(API.OWNER_FEES.UNPAID, { params: { userId } })
+                .then(res => {
+                    if (res.data && res.data.length > 0) {
+                        let html = '';
+                        res.data.forEach(fee => {
+                            html += `
+                                <tr>
+                                    <td>${fee.payParkMonth}</td>
+                                    <td class="text-danger fw-bold">${Utils.formatMoney(fee.payParkMoney)}</td>
+                                    <td>${DICT.PAY_STATUS[fee.payParkStatus]}</td>
+                                    <td>${Utils.formatDateTime(fee.createTime)}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success" onclick="payFee(${fee.feeId}, ${fee.payParkMoney})">
+                                            <i class="bi bi-credit-card"></i> 立即缴费
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        $('#unpaidFeesBody').html(html);
+                    } else {
+                        $('#unpaidFeesBody').html(`
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-check-circle text-success fs-1 d-block mb-2"></i>
+                                    暂无未缴费用
+                                </td>
+                            </tr>
+                        `);
+                    }
+                })
+                .catch(err => {
+                    console.error('加载未缴费用失败：', err);
+                    $('#unpaidFeesBody').html(Utils.emptyData(5));
+                });
+        }
+
+        function loadPaidFees() {
+            const userId = Auth.getUserId();
+
+            // Backend doesn't have /paid endpoint, so use /my-fees and filter
+            http.get(API.OWNER_FEES.MY_FEES, { params: { userId } })
+                .then(res => {
+                    const allFees = res.data || [];
+                    // Filter for paid fees (payParkStatus == 1)
+                    const paidFees = allFees.filter(fee => fee.payParkStatus == 1);
+
+                    if (paidFees.length > 0) {
+                        let html = '';
+                        paidFees.forEach(fee => {
+                            html += `
+                                <tr>
+                                    <td>${fee.payParkMonth}</td>
+                                    <td class="text-success fw-bold">${Utils.formatMoney(fee.payParkMoney)}</td>
+                                    <td>${DICT.PAY_STATUS[fee.payParkStatus]}</td>
+                                    <td>${Utils.formatDateTime(fee.createTime)}</td>
+                                    <td>${Utils.formatDateTime(fee.payTime)}</td>
+                                </tr>
+                            `;
+                        });
+                        $('#paidFeesBody').html(html);
+                    } else {
+                        $('#paidFeesBody').html(`
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    暂无已缴费用
+                                </td>
+                            </tr>
+                        `);
+                    }
+                })
+                .catch(err => {
+                    console.error('加载已缴费用失败：', err);
+                    $('#paidFeesBody').html(Utils.emptyData(5));
+                });
+        }
+
+        function payFee(feeId, amount) {
+            Utils.confirm(`确定要缴纳费用 ${Utils.formatMoney(amount)} 吗？`, () => {
+                const userId = Auth.getUserId();
+
+                http.post(API.OWNER_FEES.PAY, null, {
+                    params: { parkFeeId: feeId, userId }
+                })
+                .then(() => {
+                    Utils.showSuccess('缴费成功！');
+                    loadFeeStatistics();
+                    loadUnpaidFees();
+                    loadPaidFees();
+                })
+                .catch(err => {
+                    console.error('缴费失败：', err);
+                    Utils.showError('缴费失败');
+                });
+            });
+        }
+    </script>
+</body>
+</html>

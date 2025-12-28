@@ -70,13 +70,40 @@ public class OwnerParkingController {
      * @return 停车记录
      */
     @GetMapping("/record")
-    public Result<OwnerParking> getParkingRecordByUserId(@RequestParam Long userId) {
+    public Result<Map<String, Object>> getParkingRecordByUserId(@RequestParam Long userId) {
         log.info("【负载均衡】Request handled by parking-service instance on port: {}, userId: {}", serverPort, userId);
         OwnerParking ownerParking = parkingService.getOwnerParking(userId);
         if (ownerParking == null) {
             return Result.error("该用户没有停车记录");
         }
-        return Result.success(ownerParking);
+
+        // 获取车位详细信息
+        ParkingSpace parkingSpace = parkingService.getParkingById(ownerParking.getParkId());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("userId", ownerParking.getUserId());
+        result.put("parkId", ownerParking.getParkId());
+        result.put("parkNum", parkingSpace != null ? parkingSpace.getParkNum() : null);
+        result.put("carNum", ownerParking.getCarNum());
+
+        return Result.success(result);
+    }
+
+    /**
+     * 更新车牌号
+     *
+     * @param userId 业主ID
+     * @param carNum 新车牌号
+     * @return 是否成功
+     */
+    @PutMapping("/update-car")
+    public Result<Void> updateCarNumber(@RequestParam Long userId, @RequestParam String carNum) {
+        try {
+            boolean success = parkingService.updateCarNumber(userId, carNum);
+            return success ? Result.success("车牌号更新成功", null) : Result.error("更新失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
 
     // ==================== 停车费管理 ====================

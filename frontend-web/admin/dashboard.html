@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员首页 - 停车管理系统</title>
+
+    <link href="../libs/bootstrap.min.css" rel="stylesheet">
+    <link href="../libs/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Toast容器 -->
+    <div id="toastContainer"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-p-square-fill"></i> 停车管理系统 - 管理员
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="usernameDisplay"></span>
+                </span>
+                <button class="btn btn-outline-light btn-sm" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="dashboard.html">
+                                <i class="bi bi-speedometer2"></i> 控制台
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="owners.html">
+                                <i class="bi bi-people"></i> 业主管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="parkings.html">
+                                <i class="bi bi-car-front"></i> 车位管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="fees.html">
+                                <i class="bi bi-cash-coin"></i> 费用管理
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-10 ms-sm-auto content-wrapper">
+                <h2 class="page-title">控制台</h2>
+
+                <!-- 统计卡片 -->
+                <div class="row" id="statsCards">
+                    <!-- 动态加载 -->
+                </div>
+
+                <!-- 最近活动 -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-clock-history"></i> 系统概览
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-2"><i class="bi bi-info-circle text-primary"></i> 欢迎使用停车管理系统</p>
+                                <p class="mb-2"><i class="bi bi-server text-success"></i> 系统运行正常</p>
+                                <p class="mb-0"><i class="bi bi-clock text-warning"></i> 当前时间：<span id="currentTime"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../libs/jquery.min.js"></script>
+    <script src="../libs/bootstrap.bundle.min.js"></script>
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // 检查登录状态
+            if (!Auth.checkAuth('admin')) {
+                return;
+            }
+
+            // 显示用户名
+            $('#usernameDisplay').text(Auth.getUsername());
+
+            // 退出登录
+            $('#logoutBtn').click(function() {
+                Utils.confirm('确定要退出登录吗？', () => {
+                    Auth.logout();
+                });
+            });
+
+            // 加载统计数据
+            loadStats();
+
+            // 更新时间
+            updateTime();
+            setInterval(updateTime, 1000);
+        });
+
+        // 加载统计数据
+        function loadStats() {
+            const stats = [
+                {
+                    icon: 'bi-people',
+                    color: 'primary',
+                    value: '0',
+                    label: '总业主数',
+                    id: 'totalOwners'
+                },
+                {
+                    icon: 'bi-car-front',
+                    color: 'success',
+                    value: '0',
+                    label: '总车位数',
+                    id: 'totalParkings'
+                },
+                {
+                    icon: 'bi-check-circle',
+                    color: 'info',
+                    value: '0',
+                    label: '已分配车位',
+                    id: 'assignedParkings'
+                },
+                {
+                    icon: 'bi-cash-coin',
+                    color: 'warning',
+                    value: '¥0',
+                    label: '本月费用',
+                    id: 'monthlyFees'
+                }
+            ];
+
+            let html = '';
+            stats.forEach(stat => {
+                html += `
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="stats-card card">
+                            <div class="card-body">
+                                <div class="stats-icon bg-${stat.color} bg-opacity-10 text-${stat.color}">
+                                    <i class="bi ${stat.icon}"></i>
+                                </div>
+                                <div class="stats-value" id="${stat.id}">${stat.value}</div>
+                                <div class="stats-label">${stat.label}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            $('#statsCards').html(html);
+
+            // 实际加载数据
+            fetchStats();
+        }
+
+        // 获取统计数据
+        function fetchStats() {
+            // 获取业主总数
+            http.get(API.OWNERS.LIST, { params: { pageNum: 1, pageSize: 1 } })
+                .then(res => {
+                    $('#totalOwners').text(res.data.total || 0);
+                })
+                .catch(err => console.error('获取业主数量失败：', err));
+
+            // 获取车位总数和已分配车位数
+            http.get(API.PARKINGS.LIST, { params: { pageNum: 1, pageSize: 1 } })
+                .then(res => {
+                    $('#totalParkings').text(res.data.total || 0);
+                })
+                .catch(err => console.error('获取车位数量失败：', err));
+
+            http.get(API.PARKINGS.LIST, { params: { pageNum: 1, pageSize: 1, status: '1' } })
+                .then(res => {
+                    $('#assignedParkings').text(res.data.total || 0);
+                })
+                .catch(err => console.error('获取已分配车位数量失败：', err));
+
+            // 获取本月费用（未实现，使用模拟数据）
+            $('#monthlyFees').text('¥0');
+        }
+
+        // 更新时间
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            $('#currentTime').text(timeStr);
+        }
+    </script>
+</body>
+</html>

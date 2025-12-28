@@ -75,6 +75,26 @@ resilience4j:
       idle-timeout: 300000
       connection-timeout: 30000
 
+  # RabbitMQ 配置 (阶段6 - 异步消息通信)
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}  # RabbitMQ地址，支持环境变量
+    port: ${SPRING_RABBITMQ_PORT:5672}  # AMQP端口
+    username: ${SPRING_RABBITMQ_USERNAME:admin}
+    password: ${SPRING_RABBITMQ_PASSWORD:admin123}
+    publisher-confirm-type: correlated  # 发布者确认模式
+    publisher-returns: true  # 发布者返回
+    template:
+      mandatory: true  # 消息路由失败时返回
+    listener:
+      simple:
+        acknowledge-mode: manual  # 手动确认模式
+        retry:
+          enabled: true  # 启用重试
+          max-attempts: 3  # 最大重试次数
+          initial-interval: 1000  # 初始重试间隔（毫秒）
+          multiplier: 2.0  # 重试间隔倍数
+          max-interval: 10000  # 最大重试间隔
+
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
