@@ -167,11 +167,11 @@ services:
       - parking-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/5672' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
 
   # 用户服务（包含认证）- 实例1
   user-service-1:

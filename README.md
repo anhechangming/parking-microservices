@@ -2,7 +2,7 @@
 
 基于Spring Boot 3.3.6 + Spring Cloud Alibaba + Nacos 3.1.0的微服务架构停车管理系统
 
-## 📋 项目简介
+## 项目简介
 
 本项目采用微服务架构设计，将停车管理系统拆分为3个独立的微服务，通过Nacos实现服务注册与发现，使用RestTemplate实现服务间调用。
 
@@ -27,7 +27,7 @@
 
 ---
 
-## 🏗️ 系统架构
+## 系统架构
 
 ### 服务依赖关系图（单向依赖，无循环）
 
@@ -78,66 +78,7 @@
 
 ---
 
-## 🚀 快速开始
-
-### 方式一：Docker部署（推荐）
-
-```bash
-# 1. 编译打包
-mvn clean package -DskipTests
-
-# 2. 启动所有容器
-docker-compose up -d
-
-# 3. 查看启动日志
-docker-compose logs -f
-
-# 4. 访问Nacos控制台验证
-# http://localhost:8848/nacos (nacos/nacos)
-```
-
-### 方式二：本地开发
-
-#### 步骤1: 启动基础设施
-
-```bash
-# 启动数据库和Nacos
-docker-compose up -d user-db parking-db fee-db nacos
-
-# 等待Nacos启动完成（约30-60秒）
-docker logs -f parking-nacos
-```
-
-#### 步骤2: 启动服务（按顺序）
-
-**使用IDE (推荐)**:
-1. user-service (必须先启动，被其他服务依赖)
-2. parking-service
-3. fee-service
-
-**使用Maven**:
-```bash
-# 在根目录执行
-mvn clean package -DskipTests
-
-# 分别启动各服务
-cd user-service && mvn spring-boot:run &
-cd parking-service && mvn spring-boot:run &
-cd fee-service && mvn spring-boot:run &
-```
-
-#### 步骤3: 验证服务注册
-
-访问Nacos控制台：http://localhost:8848/nacos (账号/密码: nacos/nacos)
-
-在"服务管理 → 服务列表"中，应该看到3个服务：
-- ✅ user-service
-- ✅ parking-service
-- ✅ fee-service
-
----
-
-## 📡 服务间调用说明
+## 阶段一：服务间调用（单体）
 
 ### 核心技术
 
@@ -432,7 +373,7 @@ public Result<OwnerParking> getParkingRecordByUserId(@RequestParam Long userId) 
 
 ---
 
-## 💡 为什么需要这些跨服务调用？
+### 业务场景
 
 ### 业务场景1: 分配车位时必须验证用户存在
 
@@ -494,7 +435,7 @@ curl -X POST 'http://localhost:8083/fee/owner/pay?parkFeeId=1&userId=1'
 
 ---
 
-## 🔗 完整业务流程示例
+### 完整业务流程示例
 
 ### 场景1：管理员分配车位给业主
 
@@ -558,7 +499,7 @@ curl -X POST 'http://localhost:8083/fee/owner/pay?parkFeeId=1&userId=1'
 
 ---
 
-## 📚 API接口文档
+### API接口文档
 
 ### user-service (端口 8081)
 
@@ -619,7 +560,7 @@ GET /fee/owner/{feeId} - 查看费用详情
 
 ---
 
-## 🔧 配置说明
+### 配置说明
 
 ### 端口映射
 
@@ -660,7 +601,7 @@ fee-db:
 
 ---
 
-## 🔄 微服务拆分策略
+## 阶段二：微服务拆分
 
 ### 原始单体架构的问题
 
@@ -760,84 +701,7 @@ public Result<Owner> getOwnerById(@PathVariable Long userId) { ... }
 public Result<OwnerParking> getParkingRecordByUserId(@RequestParam Long userId) { ... }
 ```
 
-### 拆分后的收益
-
-1. ✅ **独立部署**: 修改fee-service不影响user-service和parking-service
-2. ✅ **独立扩展**: 可以只扩展高负载的服务（如fee-service）
-3. ✅ **故障隔离**: 一个服务宕机不会导致整个系统不可用（降级处理）
-4. ✅ **技术多样性**: 未来可以用不同语言实现不同服务
-5. ✅ **团队独立**: 不同团队可以独立开发维护各自的服务
-
-### 拆分的挑战与解决方案
-
-| 挑战 | 解决方案 |
-|-----|---------|
-| **数据一致性** | 使用跨服务调用验证数据完整性 |
-| **分布式事务** | 目前使用本地事务，未来可引入Seata |
-| **服务发现** | 使用Nacos实现自动服务注册与发现 |
-| **负载均衡** | 使用Spring Cloud LoadBalancer客户端负载均衡 |
-| **配置管理** | 目前使用application.yml，未来可使用Nacos配置中心 |
-| **链路追踪** | 建议引入Sleuth+Zipkin（待实现） |
-| **API网关** | 建议引入Spring Cloud Gateway（待实现） |
-
----
-
-## 🐛 常见问题
-
-### 1. 服务启动顺序很重要吗？
-
-是的！由于存在服务依赖，建议按以下顺序启动：
-
-```bash
-# 1. 基础设施
-docker-compose up -d user-db parking-db fee-db nacos
-
-# 2. 基础服务（不依赖其他服务）
-docker-compose up -d user-service
-
-# 3. 依赖user-service的服务
-docker-compose up -d parking-service
-
-# 4. 依赖其他服务的服务
-docker-compose up -d fee-service
-
-# 或者一次性启动（docker-compose会自动处理依赖）
-docker-compose up -d
-```
-
-### 2. 如何验证服务间调用是否正常？
-
-```bash
-# 1. 查看Nacos控制台，确认所有服务已注册
-http://localhost:8848/nacos
-
-# 2. 测试分配车位（parking-service调用user-service）
-curl -X POST "http://localhost:8082/parking/assign" \
-  -H "Content-Type: application/json" \
-  -d '{"userId":1,"parkId":101}'
-
-# 3. 查看服务日志，应该看到调用记录
-docker logs parking-parking-service | grep "调用user-service"
-docker logs parking-fee-service | grep "调用"
-```
-
-### 3. 服务调用失败怎么办？
-
-```bash
-# 1. 检查Nacos中服务是否注册
-curl http://localhost:8848/nacos/v1/ns/instance/list?serviceName=user-service
-
-# 2. 检查网络连通性
-docker exec parking-parking-service ping user-service
-
-# 3. 查看服务日志
-docker logs parking-parking-service
-docker logs parking-user-service
-```
-
----
-
-## 📊 项目结构
+### 项目结构
 
 ```
 parking-microservices/
@@ -896,163 +760,7 @@ parking-microservices/
 
 ---
 
-## 技术栈
-
-- **Spring Boot**: 3.3.6
-- **Spring Cloud**: 2023.0.3
-- **Spring Cloud Alibaba**: 2023.0.1.2
-- **Nacos**: v3.1.0
-- **MyBatis**: 3.0.3
-- **MySQL**: 8.4
-- **JWT**: 0.12.6
-- **JDK**: 17
-
----
-
-## 🖥️ 虚拟机部署指南
-
-### 前置要求
-
-- Linux虚拟机 (CentOS/Ubuntu均可)
-- Docker 20.10+
-- Docker Compose 2.0+
-- 至少4GB内存，2核CPU
-
-### 完整部署流程
-
-#### 步骤1: 在本地主机打包项目
-
-```bash
-# 在项目根目录执行
-cd D:\桌面\PMS- Microservices\parking-microservices
-
-# 清理并打包（跳过测试）
-mvn clean package -DskipTests
-
-# 打包完成后，会在各个服务的target目录生成jar包：
-# - user-service/target/user-service-0.0.1-SNAPSHOT.jar
-# - parking-service/target/parking-service-0.0.1-SNAPSHOT.jar
-# - fee-service/target/fee-service-0.0.1-SNAPSHOT.jar
-```
-
-#### 步骤2: 传输文件到虚拟机
-
-```bash
-# 方式一：使用scp（在Windows主机上）
-scp -r D:\桌面\PMS- Microservices\parking-microservices user@虚拟机IP:/home/user/
-
-# 方式二：使用WinSCP或FileZilla等图形化工具
-# 将整个parking-microservices文件夹传输到虚拟机
-```
-
-#### 步骤3: 在虚拟机上启动服务
-
-```bash
-# SSH连接到虚拟机
-ssh user@虚拟机IP
-
-# 进入项目目录
-cd /home/user/parking-microservices
-
-# 确保docker-compose.yml有执行权限
-chmod +x test-microservices.sh
-
-# 启动所有服务（首次启动会拉取镜像，需要等待）
-docker compose up -d
-
-# 查看启动日志
-docker compose logs -f
-
-# 等待所有服务健康检查通过（约1-2分钟）
-docker compose ps
-```
-
-#### 步骤4: 验证服务注册
-
-```bash
-# 在虚拟机上执行
-curl http://localhost:8848/nacos/v1/ns/instance/list?serviceName=user-service
-curl http://localhost:8848/nacos/v1/ns/instance/list?serviceName=parking-service
-curl http://localhost:8848/nacos/v1/ns/instance/list?serviceName=fee-service
-
-# 或访问Nacos控制台（从主机浏览器）
-# http://虚拟机IP:8848/nacos (账号: nacos, 密码: nacos)
-```
-
-#### 步骤5: 运行测试脚本
-
-```bash
-# 在虚拟机上执行测试脚本
-bash test-microservices.sh
-
-# 该脚本会自动测试：
-# 1. 各服务独立API调用
-# 2. parking-service → user-service 跨服务调用
-# 3. fee-service → user-service 跨服务调用
-# 4. fee-service → parking-service 跨服务调用
-# 5. 验证Nacos服务注册
-```
-
-### 常见虚拟机部署问题
-
-#### 问题1: Docker镜像构建缓存问题
-
-**现象**: 修改代码后重新打包，但虚拟机运行的还是旧代码
-
-**原因**: Docker使用了缓存的镜像层
-
-**解决方案**:
-```bash
-# 停止所有容器
-docker compose down
-
-# 清理旧镜像（可选）
-docker rmi parking-user-service parking-parking-service parking-fee-service
-
-# 不使用缓存重新构建
-docker compose build --no-cache
-
-# 启动服务
-docker compose up -d
-```
-
-#### 问题2: 端口被占用
-
-**现象**: `bind: address already in use`
-
-**解决方案**:
-```bash
-# 查看端口占用
-netstat -tulpn | grep -E '8081|8082|8083|8848|3307|3308|3309'
-
-# 停止占用端口的进程
-kill -9 <PID>
-
-# 或修改docker-compose.yml中的端口映射
-```
-
-#### 问题3: 内存不足
-
-**现象**: 服务启动后频繁重启或OOM
-
-**解决方案**:
-```bash
-# 检查内存使用
-free -h
-docker stats
-
-# 修改docker-compose.yml，限制每个服务的内存
-services:
-  user-service:
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-```
-
----
-
-## 🧪 测试指南
+### 测试指南
 
 nacos控制中心
 ![image-20251217234333861](images/image-20251217234333861.png)
@@ -1079,23 +787,10 @@ fee-service测试 停止服务后测试
 
 ![image-20251217234518178](images/image-20251217234518178.png)
 
-### 自动化测试
-
-项目提供了完整的测试脚本 `test-microservices.sh`，涵盖所有跨服务调用场景。
-
-#### 运行测试脚本
-
-```bash
-# 赋予执行权限
-chmod +x test-microservices.sh
-
-# 执行测试
-bash test-microservices.sh
-```
-
 #### 测试内容说明
 
 **测试1: 查询所有用户（user-service独立调用）**
+
 ```bash
 curl -X GET 'http://localhost:8081/user/owners'
 # 验证user-service基本功能正常
@@ -1158,7 +853,7 @@ curl -X POST 'http://localhost:8083/fee/owner/pay?parkFeeId=1&userId=1'
 docker logs parking-fee-service 2>&1 | grep "跨服务调用"
 ```
 
-### 验证强依赖关系
+#### 验证强依赖关系
 
 #### 测试服务不可用场景
 
@@ -1185,42 +880,11 @@ docker start parking-user-service
 这些测试证明了服务之间的**真正依赖关系**：
 - ✅ fee-service **依赖** user-service和parking-service
 - ✅ parking-service **依赖** user-service
-- ✅ 如果依赖的服务不可用，调用会失败（不是假接口）
-
-### 手动测试场景
-
-#### 场景1: 完整的车位分配流程
-
-```bash
-# 1. 查询可用车位
-curl -X GET 'http://localhost:8082/parking/admin/parkings/available'
-
-# 2. 查询用户列表
-curl -X GET 'http://localhost:8081/user/owners'
-
-# 3. 分配车位（触发跨服务调用）
-curl -X POST 'http://localhost:8082/parking/admin/parkings/assign?userId=1&parkId=1&carNumber=京A12345'
-
-# 4. 验证分配结果
-curl -X GET 'http://localhost:8082/parking/owner/my-parking?userId=1'
-```
-
-#### 场景2: 完整的缴费流程
-
-```bash
-# 1. 查询用户未缴费列表
-curl -X GET 'http://localhost:8083/fee/owner/unpaid-fees?userId=1'
-
-# 2. 缴纳停车费（触发多个跨服务调用）
-curl -X POST 'http://localhost:8083/fee/owner/pay?parkFeeId=1&userId=1'
-
-# 3. 查看缴费后的费用列表
-curl -X GET 'http://localhost:8083/fee/owner/my-fees?userId=1'
-```
+- ✅ 如果依赖的服务不可用，调用会失败
 
 ---
 
-## 🗄️ 数据库设计详解
+### 数据库设计详解
 
 ### user-db (parking_user_db)
 
@@ -1328,9 +992,7 @@ parking-db.parking_space.park_id (车位ID)
 - 这个约束通过跨服务调用在应用层实现
 ```
 
----
-
-## 🔍 故障排查指南
+### 故障排查
 
 ### 1. 数据库连接问题
 
@@ -1496,7 +1158,7 @@ services:
 
 ---
 
-## 📝 总结
+### 总结
 
 本项目成功将单体停车管理系统拆分为3个微服务，实现了：
 
@@ -1519,48 +1181,15 @@ services:
 - ✅ 详细的故障排查指南
 - ✅ 数据库schema文档
 
-### 下一步优化建议
-
-1. **API网关**: 引入Spring Cloud Gateway统一入口
-2. **配置中心**: 使用Nacos Config统一管理配置
-3. **分布式事务**: 引入Seata处理跨服务事务
-4. **链路追踪**: 引入Sleuth+Zipkin追踪请求链路
-5. **熔断降级**: 引入Sentinel实现服务保护
-6. **消息队列**: 引入RabbitMQ/Kafka实现异步通信
-7. **监控告警**: 引入Prometheus+Grafana监控服务指标
-
 ---
 
-## 📚 参考资料
-
-- [Spring Boot官方文档](https://spring.io/projects/spring-boot)
-- [Spring Cloud Alibaba文档](https://spring-cloud-alibaba-group.github.io/github-pages/2023/zh-cn/index.html)
-- [Nacos官方文档](https://nacos.io/zh-cn/docs/what-is-nacos.html)
-- [MyBatis官方文档](https://mybatis.org/mybatis-3/zh/index.html)
-
----
-
-## 🚀 阶段三：服务间通信与负载均衡 (OpenFeign + LoadBalancer + Resilience4j)
+## 阶段三：服务间通信与负载均衡 (OpenFeign + LoadBalancer + Resilience4j)
 
 ### 设计思路
 
 在阶段二完成服务注册与发现的基础上，阶段三将 RestTemplate 升级为更现代化的 **OpenFeign 声明式HTTP客户端**，并集成 **Spring Cloud LoadBalancer** 实现客户端负载均衡，以及 **Resilience4j** 实现熔断降级，提升系统的可用性和容错能力。
 
-#### 为什么需要 OpenFeign？
-
-**RestTemplate 的局限性**：
-- 需要手动拼接 URL
-- 需要手动处理 HTTP 请求和响应
-- 代码冗余，不够优雅
-- 需要手动处理负载均衡
-
-**OpenFeign 的优势**：
-- 声明式 HTTP 客户端，使用注解定义接口即可
-- 自动集成 Ribbon/LoadBalancer 负载均衡
-- 自动集成 Hystrix/Resilience4j 熔断降级
-- 代码简洁，可读性强
-
-#### 架构设计
+### 架构设计
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1588,11 +1217,11 @@ services:
          └────────────────────┘     └────────────────────┘
 
 特性：
-✅ 声明式服务调用 (OpenFeign)
-✅ 客户端负载均衡 (LoadBalancer)
-✅ 熔断降级 (Resilience4j)
-✅ 超时配置
-✅ 失败重试
+声明式服务调用 (OpenFeign)
+客户端负载均衡 (LoadBalancer)
+熔断降级 (Resilience4j)
+超时配置
+失败重试
 ```
 
 ### 技术选型
@@ -1604,20 +1233,6 @@ services:
 | **Resilience4j** | 2.2.0 | 熔断器、重试、限流等容错机制 |
 | **Spring Boot** | 3.3.6 | 应用框架 |
 | **Spring Cloud** | 2023.0.3 | 微服务框架 |
-
-**为什么选择这个组合？**
-
-1. **OpenFeign vs RestTemplate**
-   - OpenFeign：声明式、自动集成负载均衡和熔断
-   - RestTemplate：手动编码、需要自己处理异常
-
-2. **LoadBalancer vs Ribbon**
-   - LoadBalancer：Spring Cloud官方推荐，活跃维护
-   - Ribbon：已停止维护
-
-3. **Resilience4j vs Hystrix**
-   - Resilience4j：轻量级、函数式编程风格
-   - Hystrix：已停止维护
 
 ### 实现细节
 
@@ -2075,125 +1690,7 @@ fee-service (8083)
 
 ### 测试验证
 
-项目提供了完整的自动化测试脚本 `test-phase3.sh`，包含以下测试场景：
-
-#### 使用测试脚本
-
-```bash
-# 赋予执行权限
-chmod +x test-phase3.sh
-
-# 执行测试
-./test-phase3.sh
-```
-
-#### 测试场景说明
-
-##### 阶段0：准备测试数据
-
-脚本会自动创建 20 条未缴费的停车费记录，用于测试。
-
-```sql
--- 自动执行
-DELETE FROM fee_park WHERE user_id = 1;
-INSERT INTO fee_park (user_id, park_id, pay_park_month, pay_park_money, pay_park_status, create_time, update_time)
-VALUES (1, 1, '2025-01', 500.00, '0', NOW(), NOW()), ...;
-```
-
-##### 阶段1：负载均衡测试
-
-**目标**：验证请求是否均匀分配到多个服务实例
-
-**步骤**：
-
-1. 重启所有服务，清空日志
-2. 发送 10 次缴费请求
-3. 统计每个实例处理的请求数量
-
-**预期结果**：
-
-```
-=========================================
-负载均衡统计结果
-=========================================
-user-service-8081:     5 次请求
-user-service-8091:     5 次请求
-parking-service-8082:  5 次请求
-parking-service-8092:  5 次请求
-=========================================
-✅ user-service 负载均衡生效！两个实例都收到请求
-✅ parking-service 负载均衡生效！两个实例都收到请求
-```
-
-**详细日志示例**：
-
-```
-【user-service-8081】
-2025-12-22 15:35:41 [user-service:8081] - 【负载均衡】Request handled by user-service instance on port: 8081, userId: 1
-2025-12-22 15:35:43 [user-service:8081] - 【负载均衡】Request handled by user-service instance on port: 8081, userId: 1
-
-【user-service-8091】
-2025-12-22 15:35:42 [user-service:8091] - 【负载均衡】Request handled by user-service instance on port: 8091, userId: 1
-2025-12-22 15:35:44 [user-service:8091] - 【负载均衡】Request handled by user-service instance on port: 8091, userId: 1
-```
-
-##### 阶段2：熔断降级测试
-
-**场景1：user-service 熔断降级**
-
-```bash
-# 1. 停止所有 user-service 实例
-docker stop parking-user-service-8081 parking-user-service-8091
-
-# 2. 调用缴费接口
-curl -X POST "http://localhost:8083/fee/owner/pay?parkFeeId=1&userId=1"
-
-# 3. 预期响应
-{"code":500,"message":"用户不存在，无法缴费","data":null,...}
-
-# 4. 预期日志
-2025-12-22 16:04:23 [fee-service:8083] - 【熔断降级】user-service不可用，调用降级方法: userId=1
-```
-
-**场景2：parking-service 熔断降级**
-
-```bash
-# 1. 停止所有 parking-service 实例
-docker stop parking-parking-service-8082 parking-parking-service-8092
-
-# 2. 调用缴费接口
-curl -X POST "http://localhost:8083/fee/owner/pay?parkFeeId=2&userId=1"
-
-# 3. 预期响应
-{"code":500,"message":"用户没有停车记录，无法缴费。请先分配车位。","data":null,...}
-
-# 4. 预期日志
-2025-12-22 16:05:10 [fee-service:8083] - 【熔断降级】parking-service不可用，调用降级方法: userId=1
-```
-
-**场景3：部分实例故障（容错测试）**
-
-```bash
-# 1. 停止一个 user-service 实例（保留另一个）
-docker stop parking-user-service-8081
-
-# 2. 发送 3 次请求
-for i in {1..3}; do
-  curl -X POST "http://localhost:8083/fee/owner/pay?parkFeeId=$i&userId=1"
-done
-
-# 3. 预期结果
-✅ 所有请求成功（因为还有一个实例可用）
-✅ 所有请求都路由到 user-service-8091
-
-# 4. 查看日志
-docker logs parking-user-service-8091 | grep "负载均衡"
-# 应该看到 3 条请求记录，全部由 8091 实例处理
-```
-
-#### 手动测试步骤
-
-如果想手动测试，可以按以下步骤操作：
+### 手动测试步骤
 
 ##### 1. 启动多实例
 
@@ -2249,9 +1746,6 @@ docker logs parking-parking-service-8092 | grep "负载均衡" | wc -l
 ![image-20251222174550405](images/image-20251222174550405.png)
 
 ```bash
-
-
-
 # 测试 user-service 熔断
 docker stop parking-user-service-8081 parking-user-service-8091
 curl -X POST "http://localhost:8083/fee/owner/pay?parkFeeId=1&userId=1"
@@ -2468,63 +1962,6 @@ feign:
         readTimeout: 3000
 ```
 
-### 最佳实践建议
-
-#### 1. 降级方法设计原则
-
-✅ **好的降级方法**：
-
-```java
-@Override
-public Result<Map<String, Object>> getOwnerById(Long userId) {
-    log.error("【熔断降级】user-service不可用，调用降级方法: userId={}", userId);
-    return Result.error("用户服务暂时不可用，请稍后重试");
-}
-```
-
-❌ **不好的降级方法**：
-
-```java
-@Override
-public Result<Map<String, Object>> getOwnerById(Long userId) {
-    // 返回假数据，可能导致业务逻辑错误
-    Map<String, Object> fakeData = new HashMap<>();
-    fakeData.put("userId", userId);
-    fakeData.put("username", "未知用户");
-    return Result.success(fakeData);
-}
-```
-
-#### 2. 熔断器配置建议
-
-- **failure-rate-threshold**: 50% - 失败率超过50%才熔断
-- **minimum-number-of-calls**: 5 - 至少5次调用后才统计，避免偶然失败触发熔断
-- **wait-duration-in-open-state**: 10秒 - 熔断后等待10秒再尝试恢复
-- **sliding-window-size**: 10 - 统计最近10次调用
-
-#### 3. 日志记录建议
-
-```java
-// 在 Controller 中记录请求分配
-log.info("【负载均衡】Request handled by {} on port: {}", serviceName, serverPort);
-
-// 在 Fallback 中记录降级原因
-log.error("【熔断降级】{} 不可用，调用降级方法: params={}", serviceName, params);
-
-// 在 Service 中记录跨服务调用
-log.info("【跨服务调用】调用 {} 服务: {}", targetService, url);
-```
-
-#### 4. 监控指标
-
-建议监控以下指标：
-
-- 服务可用率
-- 平均响应时间
-- 熔断器状态
-- 负载均衡请求分布
-- 降级调用次数
-
 ### 故障排查
 
 #### 问题1：Fallback 不生效
@@ -2595,90 +2032,15 @@ feign:
         readTimeout: 10000
 ```
 
-### 性能优化建议
 
-#### 1. 连接池配置
-
-```yaml
-feign:
-  httpclient:
-    enabled: true
-    max-connections: 200  # 最大连接数
-    max-connections-per-route: 50  # 每个路由的最大连接数
-```
-
-#### 2. 启用请求压缩
-
-```yaml
-feign:
-  compression:
-    request:
-      enabled: true
-      mime-types: text/xml,application/xml,application/json
-      min-request-size: 2048
-    response:
-      enabled: true
-```
-
-#### 3. 启用缓存（Caffeine）
-
-```xml
-<!-- 添加依赖 -->
-<dependency>
-    <groupId>com.github.ben-manes.caffeine</groupId>
-    <artifactId>caffeine</artifactId>
-</dependency>
-```
-
-```java
-@Configuration
-public class CacheConfig {
-    @Bean
-    public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(Caffeine.newBuilder()
-            .expireAfterWrite(10, TimeUnit.MINUTES)
-            .maximumSize(100));
-        return cacheManager;
-    }
-}
-```
-
-### 下一步优化方向
-
-基于 Phase 3 的实现，建议后续优化：
-
-1. **API 网关**：引入 Spring Cloud Gateway，统一入口和路由
-2. **配置中心**：使用 Nacos Config 集中管理配置
-3. **链路追踪**：引入 Sleuth + Zipkin，追踪请求链路
-4. **限流保护**：使用 Sentinel 实现限流、降级
-5. **分布式事务**：引入 Seata 解决跨服务事务问题
-6. **消息队列**：引入 RabbitMQ/Kafka 实现异步通信
-7. **服务监控**：引入 Prometheus + Grafana 监控服务指标
 
 ---
 
-## 🌐 阶段四：API网关与统一认证 (Spring Cloud Gateway + JWT)
+## 阶段四：API网关与统一认证 (Spring Cloud Gateway + JWT)
 
 ### 设计思路
 
 在阶段三完成服务间通信与负载均衡的基础上，阶段四引入 **Spring Cloud Gateway** 作为系统的统一入口，实现路由转发、JWT身份认证、权限控制等功能，进一步提升系统的安全性和可维护性。
-
-#### 为什么需要API网关？
-
-**没有API网关的问题**：
-- 客户端需要知道每个微服务的地址和端口
-- 每个服务都要实现认证和授权逻辑
-- 跨域、限流、日志等横切关注点重复实现
-- 服务地址变更需要修改客户端代码
-- 无法统一管理API版本和文档
-
-**API网关的优势**：
-- 统一入口，对外隐藏内部服务架构
-- 集中式认证授权，避免重复实现
-- 统一处理跨域、限流、日志等
-- 路由动态配置，无需修改客户端
-- 支持API聚合、协议转换等高级功能
 
 #### 架构设计
 
@@ -3238,7 +2600,7 @@ services:
 
 **注意**：由于Gateway使用8080端口，需要移除Nacos的8080端口映射，避免冲突。
 
-### 完整业务流程示例
+### 测试
 
 ![image-20251224160303195](images/image-20251224160303195.png)
 
@@ -3386,131 +2748,7 @@ fee-service (8083)
 Gateway → 客户端: 返回成功
 ```
 
-### 部署与测试
 
-#### 1. 打包与部署
-
-```bash
-# 1. 本地打包所有服务
-cd D:\桌面\PMS- Microservices\parking-microservices
-mvn clean package -DskipTests
-
-# 2. 验证gateway-service JAR包生成
-ls -lh gateway-service/target/gateway-service.jar
-
-# 3. 启动所有Docker容器
-docker-compose up -d
-
-# 4. 查看gateway-service日志
-docker-compose logs -f gateway-service
-
-# 5. 等待所有服务启动（约1-2分钟）
-docker-compose ps
-```
-
-#### 2. 验证服务注册
-
-```bash
-# 1. 访问Nacos控制台
-# http://localhost:8848/nacos (账号: nacos, 密码: nacos)
-
-# 2. 命令行查询服务列表
-curl -s "http://localhost:8848/nacos/v1/ns/instance/list?serviceName=gateway-service"
-curl -s "http://localhost:8848/nacos/v1/ns/instance/list?serviceName=user-service"
-curl -s "http://localhost:8848/nacos/v1/ns/instance/list?serviceName=parking-service"
-curl -s "http://localhost:8848/nacos/v1/ns/instance/list?serviceName=fee-service"
-```
-
-#### 3. 测试Gateway路由
-
-```bash
-# 测试Gateway健康检查
-curl http://localhost:8080/actuator/health
-
-# 测试Gateway路由配置
-curl http://localhost:8080/actuator/gateway/routes
-
-# 通过Gateway访问各服务的健康检查
-curl http://localhost:8080/user/actuator/health
-curl http://localhost:8080/parking/actuator/health
-curl http://localhost:8080/fee/actuator/health
-```
-
-#### 4. 测试JWT认证
-
-完整的测试脚本请参考项目根目录的 `test-phase4.sh`：
-
-```bash
-# 赋予执行权限
-chmod +x test-phase4.sh
-
-# 执行测试
-./test-phase4.sh
-```
-
-**测试脚本内容**：
-
-```bash
-#!/bin/bash
-
-GATEWAY_URL="http://localhost:8080"
-
-echo "========== Phase 4 测试开始 =========="
-
-# 1. 登录获取Token
-echo "1. 登录获取JWT Token..."
-LOGIN_RESPONSE=$(curl -s -X POST "${GATEWAY_URL}/user/auth/owner/login" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "loginName=owner1&password=123456")
-
-TOKEN=$(echo ${LOGIN_RESPONSE} | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
-
-if [ -z "$TOKEN" ]; then
-  echo "❌ 登录失败，无法获取Token"
-  exit 1
-else
-  echo "✅ 成功获取Token: ${TOKEN:0:50}..."
-fi
-
-# 2. 测试未授权访问
-echo ""
-echo "2. 测试未授权访问（无Token）..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${GATEWAY_URL}/user/user/owners")
-if [ "$HTTP_CODE" = "401" ]; then
-  echo "✅ 正确拦截未授权请求（返回401）"
-else
-  echo "❌ 未正确拦截（返回${HTTP_CODE}）"
-fi
-
-# 3. 测试授权访问
-echo ""
-echo "3. 测试授权访问（带Token）..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-  -H "Authorization: Bearer ${TOKEN}" \
-  "${GATEWAY_URL}/user/user/owners?pageNum=1&pageSize=10")
-if [ "$HTTP_CODE" = "200" ]; then
-  echo "✅ 授权访问成功（返回200）"
-else
-  echo "❌ 授权访问失败（返回${HTTP_CODE}）"
-fi
-
-# 4. 测试路由转发
-echo ""
-echo "4. 测试Gateway路由转发..."
-services=("user" "parking" "fee")
-for service in "${services[@]}"; do
-  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-    "${GATEWAY_URL}/${service}/actuator/health")
-  if [ "$HTTP_CODE" = "200" ]; then
-    echo "✅ ${service}-service 路由正常"
-  else
-    echo "❌ ${service}-service 路由异常（${HTTP_CODE}）"
-  fi
-done
-
-echo ""
-echo "========== Phase 4 测试完成 =========="
-```
 
 ### 关键技术点总结
 
@@ -3623,100 +2861,6 @@ JWT方式：
 - ❌ 业务接口：`/user/user/**`、`/parking/**`、`/fee/**`
 - ❌ 管理接口：`/admin/**`
 - ❌ 敏感操作：`/delete/**`、`/update/**`
-
-### 性能优化建议
-
-#### 1. 启用Gateway缓存
-
-```yaml
-spring:
-  cloud:
-    gateway:
-      httpclient:
-        pool:
-          max-connections: 500  # 最大连接数
-          max-pending-acquires: 1000  # 最大等待获取连接数
-```
-
-#### 2. 配置超时时间
-
-```yaml
-spring:
-  cloud:
-    gateway:
-      httpclient:
-        connect-timeout: 3000  # 连接超时（毫秒）
-        response-timeout: 5s   # 响应超时
-```
-
-#### 3. 启用请求日志（生产环境建议关闭）
-
-```yaml
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-    reactor.netty: DEBUG
-```
-
-### 安全加固建议
-
-#### 1. Token刷新机制
-
-```java
-/**
- * Token续期策略
- * - 短期AccessToken (1小时)
- * - 长期RefreshToken (7天)
- */
-public TokenResponse refreshToken(String refreshToken) {
-    if (jwtUtil.validateToken(refreshToken)) {
-        String username = jwtUtil.getUsernameFromToken(refreshToken);
-        String newAccessToken = jwtUtil.generateToken(username);
-        return new TokenResponse(newAccessToken, refreshToken);
-    }
-    throw new UnauthorizedException("RefreshToken已过期");
-}
-```
-
-#### 2. Token黑名单
-
-```java
-/**
- * 用户退出登录时将Token加入黑名单
- * 使用Redis存储，过期时间与Token一致
- */
-@Autowired
-private RedisTemplate<String, String> redisTemplate;
-
-public void logout(String token) {
-    String key = "blacklist:" + token;
-    long expiration = jwtUtil.getExpirationFromToken(token);
-    redisTemplate.opsForValue().set(key, "1", expiration, TimeUnit.MILLISECONDS);
-}
-
-public boolean isTokenBlacklisted(String token) {
-    String key = "blacklist:" + token;
-    return Boolean.TRUE.equals(redisTemplate.hasKey(key));
-}
-```
-
-#### 3. 限流保护
-
-```yaml
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: user-service
-          uri: lb://user-service
-          predicates:
-            - Path=/user/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10  # 每秒允许10个请求
-                redis-rate-limiter.burstCapacity: 20  # 令牌桶容量
-```
 
 ### 故障排查
 
@@ -4114,7 +3258,7 @@ curl -s "http://localhost:8848/nacos/v1/ns/instance/list?serviceName=gateway-ser
 
 ---
 
-## Phase 5：配置中心（Nacos Config）
+## 阶段5：配置中心（Nacos Config）
 
 ### 概述
 
@@ -4543,6 +3687,12 @@ ENV=prod docker-compose up -d
 
 ### 运行结果与验证
 
+![image-20251229084432180](images/image-20251229084432180.png)
+
+![image-20251229084507040](images/image-20251229084507040.png)
+
+![image-20251229084512778](images/image-20251229084512778.png)
+
 #### 1. 配置读取验证
 
 **启动服务后查看日志**：
@@ -4564,7 +3714,10 @@ docker logs parking-user-service-8081 2>&1 | grep -i "nacos"
 - ✅ 监听配置文件：user-service-dev.yaml
 - ✅ 服务成功注册到Nacos
 
+![image-20251229084550459](images/image-20251229084550459.png)
+
 **调用API验证配置**：
+
 ```bash
 curl http://localhost:8081/api/config/current
 ```
@@ -4593,6 +3746,8 @@ curl http://localhost:8081/api/config/current
 - ✅ @ConfigurationProperties绑定成功
 - ✅ @Value注入成功
 - ✅ 业务配置值正确（dev环境：maxLoginAttempts=5）
+
+![image-20251229084602247](images/image-20251229084602247.png)
 
 #### 2. 动态刷新验证
 
@@ -4634,6 +3789,10 @@ docker logs -f parking-user-service-8081
 - ✅ Nacos实时推送配置更新（gRPC 9848端口）
 - ✅ 配置监听器立即接收到更新
 - ✅ 日志完整记录配置变更
+
+![image-20251229095547505](images/image-20251229095547505.png)
+
+
 
 **步骤3：再次调用API验证**
 
@@ -4677,6 +3836,8 @@ curl http://localhost:8081/api/config/test-registration
 - ✅ @RefreshScope生效，配置动态刷新
 - ✅ 业务逻辑立即使用新配置
 - ✅ 无需重启服务，零停机更新配置
+
+![image-20251229095613249](images/image-20251229095613249.png)
 
 #### 3. 多环境测试
 
@@ -4723,6 +3884,12 @@ curl http://localhost:8081/api/config/current
 - ✅ 配置值符合test环境设定
 - ✅ 环境隔离生效
 
+![image-20251229084649805](images/image-20251229084649805.png)
+
+![image-20251229084722678](images/image-20251229084722678.png)
+
+![image-20251229084740548](images/image-20251229084740548.png)
+
 #### 4. Gateway配置中心集成测试
 
 **通过网关访问user-service**：
@@ -4758,6 +3925,8 @@ curl "http://localhost:8080/user/api/config/current" \
 - ✅ JWT认证使用配置中心的密钥
 - ✅ 路由配置从Nacos加载
 - ✅ Gateway配置动态刷新正常
+
+![image-20251229084825348](images/image-20251229084825348.png)
 
 #### 5. 所有服务配置中心状态
 
@@ -4813,81 +3982,9 @@ Located property source: [BootstrapPropertySource {name='bootstrapProperties-gat
 | Docker服务名解析 | IP变化不影响连接 | ✅ 永不失效 | ✅ 通过 |
 | 配置版本管理 | Nacos记录历史版本 | ✅ 支持回滚 | ✅ 通过 |
 
-**Phase 5 配置中心所有功能验证完毕，系统运行正常！**
-
-### 配置中心最佳实践
-
-#### 1. 配置分类原则
-
-**本地配置（application.yml）**：
-- 数据库连接配置（包含敏感信息）
-- MyBatis配置
-- 服务器端口
-- 日志输出格式
-
-**Nacos配置**：
-- 业务功能开关
-- 业务参数（分页大小、超时时间等）
-- JWT密钥（统一管理）
-- 路由规则（Gateway）
-- 日志级别（可动态调整）
-
-#### 2. 命名空间规划
-
-| 命名空间 | 用途 | 配置特点 |
-|---------|------|---------|
-| **dev** | 开发环境 | 日志级别debug，参数宽松 |
-| **test** | 测试环境 | 日志级别info，参数适中 |
-| **prod** | 生产环境 | 日志级别warn，参数严格 |
-
-#### 3. Docker服务名使用
-
-**❌ 不推荐（IP会变）**：
-```yaml
-nacos:
-  config:
-    server-addr: 172.19.0.11:8848  # IP可能变化
-```
-
-**✅ 推荐（服务名永不变）**：
-```yaml
-nacos:
-  config:
-    server-addr: parking-nacos:8848  # Docker服务名
-```
-
-#### 4. 配置热更新注意事项
-
-**需要@RefreshScope的场景**：
-- @ConfigurationProperties类
-- @Value注入的Controller
-- 依赖配置的Service类
-
-**不需要@RefreshScope的场景**：
-- 静态配置（如数据库连接）
-- 不会变化的常量
-
-### 下一步优化方向
-
-基于Phase 5的实现，建议后续优化：
-
-1. **链路追踪**：引入Sleuth + Zipkin追踪微服务间请求链路
-2. **限流降级**：使用Sentinel实现限流、降级、熔断
-3. **API文档聚合**：聚合所有服务的Swagger文档到Gateway
-4. **灰度发布**：基于Gateway实现金丝雀发布
-5. **监控大盘**：Prometheus + Grafana监控Gateway和服务指标
-6. **日志聚合**：ELK收集和分析分布式日志
-7. **分布式事务**：Seata实现跨服务事务一致性
-2. **链路追踪**：引入Sleuth + Zipkin追踪请求链路
-3. **限流降级**：使用Sentinel实现限流、降级
-4. **API文档聚合**：聚合所有服务的Swagger文档
-5. **灰度发布**：基于Gateway实现金丝雀发布
-6. **监控大盘**：Prometheus + Grafana监控Gateway指标
-7. **日志聚合**：ELK收集和分析Gateway日志
-
 ---
 
-## Phase 6: 异步消息通信（RabbitMQ）
+## 阶段 6: 异步消息通信（RabbitMQ）
 
 ### 概述
 
@@ -4948,6 +4045,7 @@ nacos:
 #### 1. Docker环境配置
 
 **docker-compose.yml添加RabbitMQ**：
+
 ```yaml
 rabbitmq:
   image: rabbitmq:3.13-management  # 带Web管理界面
@@ -5215,7 +4313,7 @@ spring:
           max-interval: 10000            # 最大重试间隔10秒
 ```
 
-### 功能验证
+### 测试
 
 #### 1. RabbitMQ容器启动验证
 
@@ -5241,9 +4339,12 @@ URL: http://localhost:15672
 ```
 
 **验证点**：
+
 - ✅ RabbitMQ容器健康运行
 - ✅ Web管理界面可访问
 - ✅ 端口5672（AMQP）和15672（HTTP）正常监听
+
+![image-20251229084936015](images/image-20251229084936015.png)
 
 #### 2. 交换机和队列创建验证
 
@@ -5271,9 +4372,14 @@ parking.dlx.queue:
 - ✅ 绑定关系正确
 - ✅ 死信队列配置生效
 
+![image-20251229085022292](images/image-20251229085022292.png)
+
+![image-20251229085029909](images/image-20251229085029909.png)
+
 #### 3. 异步消息通信功能测试
 
 **步骤1：管理员登录获取Token**：
+
 ```bash
 curl -X POST "http://localhost:9000/user-service/auth/admin/login" \
   -d "loginName=testadmin&password=admin123"
@@ -5291,7 +4397,12 @@ curl -X POST "http://localhost:9000/user-service/auth/admin/login" \
 }
 ```
 
+![image-20251229085056730](images/image-20251229085056730.png)
+
+![image-20251229085109080](images/image-20251229085109080.png)
+
 **步骤2：分配车位（触发异步消息）**：
+
 ```bash
 TOKEN="eyJhbGciOiJIUzUxMiJ9..."
 
@@ -5307,7 +4418,10 @@ curl -X POST "http://localhost:9000/parking-service/parking/admin/parkings/assig
 }
 ```
 
+![image-20251229085126330](images/image-20251229085126330.png)
+
 **步骤3：查看parking-service日志（生产者）**：
+
 ```bash
 docker logs parking-parking-service-8082 --tail 20 | grep "发布车位分配事件"
 
@@ -5315,7 +4429,10 @@ docker logs parking-parking-service-8082 --tail 20 | grep "发布车位分配事
 2025-12-27 19:49:43 - 发布车位分配事件成功 - 事件ID: 1df8aca5-a9f3-441b-aae8-64979926f532, 业主ID: 3, 车位ID: 3
 ```
 
+![image-20251229085807787](images/image-20251229085807787.png)
+
 **步骤4：查看fee-service日志（消费者）**：
+
 ```bash
 docker logs parking-fee-service --tail 30 | grep "接收到车位分配事件\|成功创建费用记录"
 
@@ -5324,7 +4441,12 @@ docker logs parking-fee-service --tail 30 | grep "接收到车位分配事件\|�
 2025-12-27 19:49:43 - 成功创建费用记录 - 费用ID: 27, 业主ID: 3, 车位ID: 3, 月份: 2025-12, 金额: 300.00
 ```
 
+![image-20251229085244270](images/image-20251229085244270.png)
+
+![image-20251229091305541](images/image-20251229091305541.png)
+
 **步骤5：验证数据库自动创建费用记录**：
+
 ```bash
 docker exec fee-db mysql -uroot -proot_password parking_fee_db \
   -e "SELECT fee_id, user_id, park_id, pay_park_month, pay_park_money, pay_park_status
@@ -5336,58 +4458,15 @@ fee_id | user_id | park_id | pay_park_month | pay_park_money | pay_park_status
 ```
 
 **验证点**：
+
 - ✅ parking-service成功发送消息到RabbitMQ
 - ✅ fee-service成功接收并消费消息
 - ✅ 费用记录自动创建成功
 - ✅ 异步通信解耦两个服务
 
-#### 4. 消息幂等性验证
+![image-20251229085330334](images/image-20251229085330334.png)
 
-**场景**：重复分配同一个车位给同一个用户，验证消息幂等性
-
-**步骤1：退车位**：
-```bash
-curl -X POST "http://localhost:9000/parking-service/parking/admin/parkings/return" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "userId=3"
-
-# 响应：{"code": 200, "message": "退位成功"}
-```
-
-**步骤2：再次分配相同车位**：
-```bash
-curl -X POST "http://localhost:9000/parking-service/parking/admin/parkings/assign" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "userId=3&parkId=3&carNumber=粤B88888"
-
-# 响应：{"code": 200, "message": "分配成功"}
-```
-
-**步骤3：查看fee-service日志**：
-```bash
-docker logs parking-fee-service --tail 20 | grep "费用记录已存在"
-
-# 输出：
-2025-12-27 19:52:15 - 费用记录已存在，跳过创建 - 业主ID: 3, 车位ID: 3, 月份: 2025-12
-```
-
-**步骤4：验证数据库仍然只有1条记录**：
-```bash
-docker exec fee-db mysql -uroot -proot_password parking_fee_db \
-  -e "SELECT COUNT(*) as count FROM fee_park
-      WHERE user_id=3 AND park_id=3 AND pay_park_month='2025-12';" 2>/dev/null
-
-# 输出：
-count
-1
-```
-
-**验证点**：
-- ✅ 幂等性检查生效（基于user_id + park_id + month）
-- ✅ 重复消息不会创建重复记录
-- ✅ 消息被正确ACK，不会无限重试
-
-#### 5. 死信队列（DLX）验证
+#### 4. 死信队列（DLX）验证
 
 **场景**：模拟fee-service处理失败，验证消息进入死信队列
 
@@ -5397,6 +4476,7 @@ docker compose stop fee-db
 ```
 
 **步骤2：分配车位（会触发消息，但fee-service无法连接数据库）**：
+
 ```bash
 curl -X POST "http://localhost:9000/parking-service/parking/admin/parkings/return" \
   -H "Authorization: Bearer $TOKEN" \
@@ -5436,17 +4516,25 @@ docker compose start fee-db
 - ✅ 失败消息自动进入死信队列
 - ✅ 原队列不会无限重试（避免雪崩）
 
-#### 6. RabbitMQ管理界面验证
+![image-20251229091512258](images/image-20251229091512258.png)
+
+![image-20251229091530616](images/image-20251229091530616.png)
+
+![image-20251229091540429](images/image-20251229091540429.png)
+
+#### 5. RabbitMQ管理界面验证
 
 **访问管理界面**：`http://localhost:15672`
 
 **Overview标签**：
+
 - ✅ Connections: 3（parking-service + fee-service + management）
 - ✅ Channels: 5+
 - ✅ Queues: 3（fee队列 + notification队列 + dlx队列）
 - ✅ Message rates: 显示消息发送/接收速率
 
 **Queues标签 → fee.parking.assigned.queue**：
+
 ```
 Overview:
   - Idle since: never
@@ -5482,6 +4570,10 @@ Bindings:
 - ✅ 消息统计数据准确
 - ✅ 绑定关系清晰可见
 
+![image-20251229091611524](images/image-20251229091611524.png)
+
+![image-20251229091619050](images/image-20251229091619050.png)
+
 ### 功能验证总结
 
 | 功能 | 测试场景 | 预期结果 | 实际结果 | 状态 |
@@ -5498,190 +4590,6 @@ Bindings:
 | **死信队列** | 数据库故障 | 失败消息进入DLX | ✅ DLX生效 | ✅ 通过 |
 | **服务解耦** | parking-service独立运行 | fee-service停止不影响分配 | ✅ 解耦成功 | ✅ 通过 |
 | **消息可靠性** | 发布者确认 | mandatory=true路由失败返回 | ✅ 可靠投递 | ✅ 通过 |
-
-**Phase 6 异步消息通信所有功能验证完毕，系统运行正常！**
-
-### 异步消息通信最佳实践
-
-#### 1. 消息幂等性设计
-
-**问题**：网络抖动、重试机制可能导致消息重复消费
-
-**解决方案**：
-```java
-// 方案1：基于业务唯一键去重
-String currentMonth = new SimpleDateFormat("yyyy-MM").format(event.getEntryTime());
-int existingCount = parkingFeeMapper.countByUserIdAndParkIdAndMonth(
-    event.getUserId(), event.getParkId(), currentMonth);
-
-if (existingCount > 0) {
-    // 幂等性检查通过，跳过重复处理
-    channel.basicAck(deliveryTag, false);
-    return;
-}
-
-// 方案2：基于事件ID去重（推荐）
-if (processedEventIds.contains(event.getEventId())) {
-    channel.basicAck(deliveryTag, false);
-    return;
-}
-```
-
-**最佳实践**：
-- ✅ 使用业务唯一键（user_id + park_id + month）
-- ✅ 数据库唯一索引约束
-- ✅ 消息确认前进行幂等性检查
-
-#### 2. 消息确认模式选择
-
-**手动ACK vs 自动ACK**：
-
-| 模式 | 优点 | 缺点 | 适用场景 |
-|------|------|------|---------|
-| **自动ACK** | 代码简单 | 消息可能丢失 | 允许丢失的日志、监控数据 |
-| **手动ACK** | 保证可靠性 | 代码复杂 | 核心业务数据（费用、订单） |
-
-**手动ACK最佳实践**：
-```java
-try {
-    // 业务处理
-    processMessage(event);
-
-    // 成功：手动确认
-    channel.basicAck(deliveryTag, false);
-
-} catch (BusinessException e) {
-    // 业务异常（如数据校验失败）：拒绝消息，不重试，进入DLX
-    channel.basicNack(deliveryTag, false, false);
-
-} catch (Exception e) {
-    // 系统异常（如数据库连接失败）：拒绝消息，不重试（让Spring Retry处理）
-    channel.basicNack(deliveryTag, false, false);
-}
-```
-
-**关键参数**：
-- `deliveryTag`：消息唯一标识
-- `multiple=false`：只确认当前消息（不批量确认）
-- `requeue=false`：不重新入队（避免无限重试，交给死信队列）
-
-#### 3. 死信队列（DLX）设计
-
-**死信队列触发条件**：
-1. 消息被拒绝（basicNack/basicReject with requeue=false）
-2. 消息TTL过期
-3. 队列达到最大长度
-
-**配置示例**：
-```java
-@Bean
-public Queue feeQueue() {
-    return QueueBuilder
-            .durable(FEE_QUEUE)
-            .withArgument("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE)  // 死信交换机
-            .withArgument("x-dead-letter-routing-key", "dlx")              // 死信路由键
-            .withArgument("x-message-ttl", 86400000)  // 可选：消息TTL（24小时）
-            .build();
-}
-```
-
-**死信队列处理策略**：
-1. **人工介入**：通过Web管理界面查看失败原因
-2. **告警通知**：死信队列消息数超过阈值触发告警
-3. **定时重试**：定时任务从DLX读取消息，修复问题后重新发送
-4. **持久化存储**：将失败消息存入数据库，方便审计和追溯
-
-#### 4. 交换机类型选择
-
-| 交换机类型 | 路由规则 | 适用场景 |
-|-----------|---------|---------|
-| **Direct** | 精确匹配routing key | 点对点消息（死信队列） |
-| **Topic** | 模式匹配（*.parking.#） | 多场景路由（业务事件） |
-| **Fanout** | 广播到所有队列 | 通知、日志收集 |
-| **Headers** | 匹配消息头 | 复杂路由规则 |
-
-**本项目选择Topic的原因**：
-```
-parking.assigned  → 车位分配事件 → fee-service
-parking.returned  → 车位退还事件 → fee-service
-fee.paid          → 费用缴纳事件 → notification-service
-fee.overdue       → 费用逾期事件 → notification-service
-
-使用Topic可以灵活添加新事件类型，无需修改交换机配置
-```
-
-#### 5. 消息持久化配置
-
-**完整的消息可靠性保障**：
-
-```java
-// 1. 交换机持久化
-@Bean
-public TopicExchange parkingExchange() {
-    return ExchangeBuilder
-            .topicExchange(PARKING_EXCHANGE)
-            .durable(true)  // ✅ 持久化，重启不丢失
-            .build();
-}
-
-// 2. 队列持久化
-@Bean
-public Queue feeQueue() {
-    return QueueBuilder
-            .durable(FEE_QUEUE)  // ✅ 持久化
-            .build();
-}
-
-// 3. 消息持久化
-rabbitTemplate.convertAndSend(
-    PARKING_EXCHANGE,
-    PARKING_ASSIGNED_ROUTING_KEY,
-    event,
-    message -> {
-        message.getMessageProperties()
-               .setDeliveryMode(MessageDeliveryMode.PERSISTENT);  // ✅ 持久化
-        return message;
-    }
-);
-
-// 4. 发布者确认
-spring.rabbitmq.publisher-confirm-type=correlated  # ✅ 确认消息到达broker
-spring.rabbitmq.publisher-returns=true             # ✅ 路由失败返回
-```
-
-#### 6. 性能优化建议
-
-**并发消费**：
-```yaml
-spring:
-  rabbitmq:
-    listener:
-      simple:
-        concurrency: 5      # 最小并发消费者数
-        max-concurrency: 10 # 最大并发消费者数
-        prefetch: 10        # 每个消费者预取消息数
-```
-
-**连接池配置**：
-```yaml
-spring:
-  rabbitmq:
-    cache:
-      channel:
-        size: 50           # Channel缓存大小
-      connection:
-        mode: channel      # 连接模式（channel/connection）
-```
-
-**批量确认**（谨慎使用）：
-```java
-// 批量确认：multiple=true
-// 风险：某条消息处理失败，会导致前面所有消息也被确认
-channel.basicAck(deliveryTag, true);  // ❌ 不推荐
-
-// 单条确认：multiple=false
-channel.basicAck(deliveryTag, false);  // ✅ 推荐
-```
 
 ### 故障排查指南
 
@@ -5823,25 +4731,88 @@ ab -n 1000 -c 10 -p assign.json -T "application/x-www-form-urlencoded" \
 | **队列积压** | 0 | 消费速度 > 生产速度 |
 
 **结论**：
+
 - ✅ RabbitMQ处理性能优秀，满足业务需求
 - ✅ 异步消息通信不影响主业务响应时间
 - ✅ 消费者处理速度足够快，无积压
 
-### 下一步优化方向
+## 阶段7:部署
 
-基于Phase 6的实现，建议后续优化：
+前端   http://localhost 
 
-1. **链路追踪**：引入Sleuth + Zipkin追踪消息链路（parking-service → RabbitMQ → fee-service）
-2. **消息审计**：所有消息记录到审计表，方便排查问题
-3. **延迟队列**：实现延迟通知功能（如费用逾期7天后发送催缴通知）
-4. **优先级队列**：VIP用户的消息优先处理
-5. **流量控制**：Sentinel限流防止消息队列被打满
-6. **消息去重中间件**：引入Redis存储已处理的事件ID
-7. **DLX告警**：死信队列消息数超过阈值自动告警
-8. **消息补偿**：定时任务扫描未消费的消息并重新投递
+RabbitMQ    http://localhost:15672
 
----
+  - 用户名：admin
+  - 密码：admin123
 
-## 许可证
+nacos控制台  http://localhost:8080
 
-本项目仅供学习使用。
+  - 用户名：nacos
+  - 密码：nacos
+
+### 1、启动
+
+```bash
+docker compose up -d
+```
+
+### 2、数据库
+
+```bash
+  docker exec -i user-db mysql -uroot -proot_password parking_user_db < init-user-only.sql
+    docker exec -i parking-db mysql -uroot -proot_password parking_business_db < init-parking-only.sql
+      docker exec -i fee-db mysql -uroot -proot_password parking_fee_db < init-fee-only.sql
+```
+
+**测试部分可查看PPT里面的演示视频*
+
+### 3、测试网关、负载均衡、熔断降级测试请运行test_comprehensive.sh脚本
+
+### 4、测试异步消息队列时运行  mq_test.sh
+
+### 5、测试配置中心切换环境和动态刷新时请按照以下步骤(配置文件在nacosConfig目录下，需手动创建)
+
+#### 1、观察之前的运行环境测试配置
+
+```bash
+docker logs -f parking-user-service-8081 
+curl http://localhost:8081/api/config/current
+ curl http://localhost:8081/api/config/test-registration
+```
+
+#### 2、在控制台修改配置，测试动态刷新
+
+```bash
+curl http://localhost:8081/api/config/current
+ curl http://localhost:8081/api/config/test-registration
+```
+
+#### 3、停止容器
+
+```bash
+docker stop parking-user-service-8081 parking-user-service-8091
+docker rm  parking-user-service-8081 parking-user-service-8091
+```
+
+#### 4、切换环境
+
+```bash
+docker run -d --name parking-user-service-8081 -p 8081:8081 --network parking-microservices-openfeign_parking-network -e SPRING_PROFILES_ACTIVE=test -e SPRING_CLOUD_NACOS_CONFIG_NAMESPACE=test -e SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=parking-nacos:8848 -e SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=parking-nacos:8848 parking-microservices-openfeign-user-service-1:latest
+
+
+docker run -d --name parking-user-service-8091 -p 8091:8091 --network parking-microservices-openfeign_parking-network -e SPRING_PROFILES_ACTIVE=test -e SPRING_CLOUD_NACOS_CONFIG_NAMESPACE=test -e SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=parking-nacos:8848 -e SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=parking-nacos:8848 parking-microservices-openfeign-user-service-2:latest
+```
+
+#### 5、查看日志，确认切换环境
+
+```bash
+docker logs -f parking-user-service-8081
+```
+
+#### 6、测试配置
+
+```bash
+curl http://localhost:8081/api/config/current
+ curl http://localhost:8081/api/config/test-registration
+```
+
